@@ -1,0 +1,178 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version (e.g. v1.0.0 or v1.1.0-rc.1)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# One release at a time; never cancel a release that is already running.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  SOLUTION: Altium.sln
+  APP_PROJECT: src/Altium.PcbManufacturing/Altium.PcbManufacturing.csproj
+  RUNTIME: win-x64
+
+jobs:
+  validate:
+    name: Validate release request
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      package-version: ${{ steps.version.outputs.package-version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    env:
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+
+    steps:
+      - name: Validate source ref
+        shell: bash
+        run: |
+          if [[ "${{ github.ref_type }}" != "branch" ]]; then
+            echo "::error::Releases must be started from a branch, not '${{ github.ref }}'."
+            exit 1
+          fi
+          echo "Release source: ${{ github.ref_name }} @ ${{ github.sha }}"
+
+      - name: Validate version format
+        id: version
+        shell: bash
+        run: |
+          semver='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
+          if [[ ! "$VERSION" =~ $semver ]]; then
+            echo "::error::Version '$VERSION' must look like v1.2.3 or v1.2.3-rc.1."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "package-version=${VERSION#v}" >> "$GITHUB_OUTPUT"
+          if [[ "$VERSION" == *-* ]]; then prerelease=true; else prerelease=false; fi
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure tag and release do not exist
+        shell: bash
+        run: |
+          tags=$(gh api "repos/$GH_REPO/git/matching-refs/tags/$VERSION" \
+            --jq '[.[] | select(.ref == "refs/tags/" + env.VERSION)] | length')
+          if [[ "$tags" != "0" ]]; then
+            echo "::error::Tag '$VERSION' already exists."
+            exit 1
+          fi
+          releases=$(gh api "repos/$GH_REPO/releases" --paginate \
+            --jq '.[] | select(.tag_name == env.VERSION) | .id')
+          if [[ -n "$releases" ]]; then
+            echo "::error::A release for '$VERSION' already exists."
+            exit 1
+          fi
+
+  build:
+    name: Build, test and package
+    needs: validate
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      VERSION: ${{ needs.validate.outputs.version }}
+      PACKAGE_VERSION: ${{ needs.validate.outputs.package-version }}
+
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION }}
+
+      - name: Build
+        run: dotnet build ${{ env.SOLUTION }} --configuration Release --no-restore -p:Version=${{ env.PACKAGE_VERSION }}
+
+      - name: Test
+        run: dotnet test --solution ${{ env.SOLUTION }} --configuration Release --no-build
+
+      - name: Publish
+        run: >
+          dotnet publish ${{ env.APP_PROJECT }}
+          --configuration Release
+          --runtime ${{ env.RUNTIME }}
+          --self-contained true
+          --output publish
+          -p:PublishTrimmed=false
+          -p:Version=${{ env.PACKAGE_VERSION }}
+
+      - name: Package
+        shell: pwsh
+        run: |
+          if (-not (Test-Path publish/Altium.PcbManufacturing.exe)) {
+            throw 'Published output does not contain Altium.PcbManufacturing.exe.'
+          }
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          Compress-Archive -Path publish/* -DestinationPath "artifacts/Altium.PcbManufacturing-$env:VERSION-$env:RUNTIME.zip"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-package
+          path: artifacts/*.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Create GitHub Release
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.validate.outputs.version }}
+      PRERELEASE: ${{ needs.validate.outputs.prerelease }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+
+    steps:
+      - name: Download package
+        uses: actions/download-artifact@v8
+        with:
+          name: release-package
+          path: artifacts
+
+      # Re-check right before creation: `gh release create` would silently reuse an existing tag.
+      - name: Re-check tag does not exist
+        shell: bash
+        run: |
+          tags=$(gh api "repos/$GH_REPO/git/matching-refs/tags/$VERSION" \
+            --jq '[.[] | select(.ref == "refs/tags/" + env.VERSION)] | length')
+          if [[ "$tags" != "0" ]]; then
+            echo "::error::Tag '$VERSION' was created while this workflow was running."
+            exit 1
+          fi
+
+      - name: Create release
+        shell: bash
+        run: |
+          flags=()
+          if [[ "$PRERELEASE" == "true" ]]; then flags+=(--prerelease); fi
+          gh release create "$VERSION" artifacts/*.zip \
+            --target "${{ github.sha }}" \
+            --title "$VERSION" \
+            --generate-notes \
+            "${flags[@]}"

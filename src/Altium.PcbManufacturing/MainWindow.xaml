@@ -1,0 +1,11 @@
+<Window x:Class="Altium.PcbManufacturing.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PCB Manufacturing"
+        Width="1024"
+        Height="720"
+        WindowStartupLocation="CenterScreen">
+    <TextBlock HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               Text="Application infrastructure is ready." />
+</Window>
