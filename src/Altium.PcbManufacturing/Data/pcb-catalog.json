@@ -1,0 +1,41 @@
+{
+  "materials": [
+    { "id": "fr4-standard", "name": "FR-4 Standard", "priceMultiplier": 1.00, "productionDays": 5 },
+    { "id": "fr4-high-tg", "name": "FR-4 High Tg", "priceMultiplier": 1.25, "productionDays": 7 },
+    { "id": "rogers-4350b", "name": "Rogers RO4350B", "priceMultiplier": 2.40, "productionDays": 12 }
+  ],
+  "solderMaskColors": [
+    { "id": "green", "name": "Green", "hexColor": "#1E7B34" },
+    { "id": "black", "name": "Black", "hexColor": "#1A1A1A" },
+    { "id": "blue", "name": "Blue", "hexColor": "#1F4E9C" }
+  ],
+  "boardThicknesses": [
+    { "id": "1.6mm", "millimeters": 1.6 },
+    { "id": "0.8mm", "millimeters": 0.8 },
+    { "id": "2.0mm", "millimeters": 2.0 }
+  ],
+  "parameterGroups": [
+    {
+      "name": "Dimensions",
+      "parameters": [
+        { "name": "Width", "value": "100 mm" },
+        { "name": "Height", "value": "80 mm" },
+        { "name": "Boards quantity", "value": "10" }
+      ]
+    },
+    {
+      "name": "Layers",
+      "parameters": [
+        { "name": "Layer count", "value": "2" },
+        { "name": "Copper weight", "value": "1 oz" }
+      ]
+    },
+    {
+      "name": "Finish",
+      "parameters": [
+        { "name": "Surface finish", "value": "HASL lead-free" },
+        { "name": "Silkscreen color", "value": "White" }
+      ]
+    }
+  ]
+}

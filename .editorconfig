@@ -89,14 +89,22 @@ dotnet_naming_rule.interfaces_prefix_i.symbols = interfaces
 dotnet_naming_rule.interfaces_prefix_i.style = prefix_i
 dotnet_naming_rule.interfaces_prefix_i.severity = warning
 
-# Naming: private fields are _camelCase
+# Naming: camelCase style without a prefix
+dotnet_naming_style.camel_case.capitalization = camel_case
+dotnet_naming_style.camel_case.required_prefix =
+
+# Naming: private fields are camelCase
 dotnet_naming_symbols.private_fields.applicable_kinds = field
 dotnet_naming_symbols.private_fields.applicable_accessibilities = private
-dotnet_naming_style.underscore_camel_case.capitalization = camel_case
-dotnet_naming_style.underscore_camel_case.required_prefix = _
-dotnet_naming_rule.private_fields_underscore.symbols = private_fields
-dotnet_naming_rule.private_fields_underscore.style = underscore_camel_case
-dotnet_naming_rule.private_fields_underscore.severity = warning
+dotnet_naming_rule.private_fields_camel_case.symbols = private_fields
+dotnet_naming_rule.private_fields_camel_case.style = camel_case
+dotnet_naming_rule.private_fields_camel_case.severity = warning
+
+# Naming: parameters are camelCase
+dotnet_naming_symbols.parameters.applicable_kinds = parameter
+dotnet_naming_rule.parameters_camel_case.symbols = parameters
+dotnet_naming_rule.parameters_camel_case.style = camel_case
+dotnet_naming_rule.parameters_camel_case.severity = warning
 
 # Async methods end with Async
 dotnet_naming_symbols.async_methods.applicable_kinds = method
@@ -107,6 +115,7 @@ dotnet_naming_rule.async_methods_suffix.symbols = async_methods
 dotnet_naming_rule.async_methods_suffix.style = async_suffix
 dotnet_naming_rule.async_methods_suffix.severity = suggestion
 
-# Test projects: xUnit method names use underscores (Method_Scenario_Expected)
+# Test projects: xUnit method names use underscores (Method_Scenario_Expected), not PascalCase or an Async suffix
 [tests/**.cs]
 dotnet_naming_rule.types_and_members_pascal_case.severity = none
+dotnet_naming_rule.async_methods_suffix.severity = none

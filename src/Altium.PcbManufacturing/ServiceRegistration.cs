@@ -1,3 +1,4 @@
+using Altium.PcbManufacturing.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altium.PcbManufacturing;
@@ -7,8 +8,13 @@ namespace Altium.PcbManufacturing;
 /// </summary>
 public static class ServiceRegistration
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    /// <param name="catalog">The catalog loaded and validated at startup, before the container is built.</param>
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services, PcbCatalog catalog)
     {
+        ArgumentNullException.ThrowIfNull(catalog);
+
+        services.AddSingleton(catalog);
+        services.AddSingleton<ManufacturingPreferences>();
         services.AddSingleton<MainWindow>();
 
         return services;
