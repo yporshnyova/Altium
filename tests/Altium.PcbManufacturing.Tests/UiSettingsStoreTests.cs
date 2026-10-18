@@ -19,7 +19,7 @@ public sealed class UiSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void Default_IsEnglishAndLight() => Assert.Equal(new UiSettings(AppLanguage.English, AppTheme.Light), UiSettings.Default);
+    public void Default_IsEnglishAndDark() => Assert.Equal(new UiSettings(AppLanguage.English, AppTheme.Dark), UiSettings.Default);
 
     [Fact]
     public void Load_MissingFile_ReturnsDefaults() => Assert.Equal(UiSettings.Default, new UiSettingsStore(FilePath).Load());
@@ -29,9 +29,9 @@ public sealed class UiSettingsStoreTests : IDisposable
     {
         UiSettingsStore store = new(FilePath);
 
-        store.Save(new UiSettings(AppLanguage.Russian, AppTheme.Dark));
+        store.Save(new UiSettings(AppLanguage.Russian, AppTheme.Light));
 
-        Assert.Equal(new UiSettings(AppLanguage.Russian, AppTheme.Dark), new UiSettingsStore(FilePath).Load());
+        Assert.Equal(new UiSettings(AppLanguage.Russian, AppTheme.Light), new UiSettingsStore(FilePath).Load());
     }
 
     [Fact]
@@ -43,13 +43,13 @@ public sealed class UiSettingsStoreTests : IDisposable
     }
 
     [Theory]
-    [InlineData("""{"language":"russian","theme":"DARK"}""")]
-    [InlineData("""{ "theme": "Dark", "language": "Russian", "extra": 1 }""")]
+    [InlineData("""{"language":"russian","theme":"LIGHT"}""")]
+    [InlineData("""{ "theme": "Light", "language": "Russian", "extra": 1 }""")]
     public void Load_IsCaseInsensitiveAndIgnoresUnknownProperties(string json)
     {
         Write(json);
 
-        Assert.Equal(new UiSettings(AppLanguage.Russian, AppTheme.Dark), new UiSettingsStore(FilePath).Load());
+        Assert.Equal(new UiSettings(AppLanguage.Russian, AppTheme.Light), new UiSettingsStore(FilePath).Load());
     }
 
     [Theory]
@@ -65,11 +65,11 @@ public sealed class UiSettingsStoreTests : IDisposable
     }
 
     [Theory]
-    [InlineData("""{"language":"Klingon","theme":"Dark"}""", AppLanguage.English, AppTheme.Dark)]
-    [InlineData("""{"language":"Russian","theme":"Sepia"}""", AppLanguage.Russian, AppTheme.Light)]
-    [InlineData("""{"language":"1","theme":"1"}""", AppLanguage.English, AppTheme.Light)]
-    [InlineData("""{"language":1,"theme":true}""", AppLanguage.English, AppTheme.Light)]
-    [InlineData("""{"theme":"Dark"}""", AppLanguage.English, AppTheme.Dark)]
+    [InlineData("""{"language":"Klingon","theme":"Light"}""", AppLanguage.English, AppTheme.Light)]
+    [InlineData("""{"language":"Russian","theme":"Sepia"}""", AppLanguage.Russian, AppTheme.Dark)]
+    [InlineData("""{"language":"1","theme":"1"}""", AppLanguage.English, AppTheme.Dark)]
+    [InlineData("""{"language":1,"theme":true}""", AppLanguage.English, AppTheme.Dark)]
+    [InlineData("""{"theme":"Light"}""", AppLanguage.English, AppTheme.Light)]
     public void Load_InvalidValue_FallsBackForThatValueOnly(string json, AppLanguage language, AppTheme theme)
     {
         Write(json);

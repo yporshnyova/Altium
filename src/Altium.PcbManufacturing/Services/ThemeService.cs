@@ -25,7 +25,7 @@ public sealed class ThemeService : IThemeService
         EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent, new RoutedEventHandler(OnWindowLoaded));
     }
 
-    public AppTheme Theme { get; private set; } = AppTheme.Light;
+    public AppTheme Theme { get; private set; } = AppTheme.Dark;
 
     public void Apply(AppTheme theme)
     {

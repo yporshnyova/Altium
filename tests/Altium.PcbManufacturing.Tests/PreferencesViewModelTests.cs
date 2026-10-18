@@ -190,13 +190,20 @@ public sealed class PreferencesViewModelTests
     }
 
     [Fact]
-    public void AssigningNullSelections_KeepsCurrentSelections()
+    public void AssigningNullMaterial_ThrowsAndKeepsCurrentMaterial()
     {
-        viewModel.SelectedMaterial = null!;
-        viewModel.SelectedSolderMaskColor = null!;
-        viewModel.SelectedBoardThickness = null!;
+        Assert.Throws<ArgumentNullException>(() => viewModel.SelectedMaterial = null!);
 
         Assert.Same(catalog.Materials[0], preferences.SelectedMaterial);
+        Assert.Empty(changedProperties);
+    }
+
+    [Fact]
+    public void AssigningNullSolderMaskOrThickness_KeepsCurrentSelections()
+    {
+        viewModel.SelectedSolderMaskColor = null;
+        viewModel.SelectedBoardThickness = null;
+
         Assert.Same(catalog.SolderMaskColors[0], preferences.SelectedSolderMaskColor);
         Assert.Same(catalog.BoardThicknesses[0], preferences.SelectedBoardThickness);
         Assert.Empty(changedProperties);

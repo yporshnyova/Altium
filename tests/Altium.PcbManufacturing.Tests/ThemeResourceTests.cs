@@ -29,15 +29,18 @@ public sealed partial class ThemeResourceTests
     }
 
     [Fact]
-    public void Xaml_DynamicResources_AreDefinedByThePalette()
+    public void Xaml_DynamicResources_AreDefined()
     {
+        // Mostly theme brushes; per-instance resources such as the unavailable-step tooltip live in AppStyles.xaml.
         HashSet<string> keys = PaletteKeys("Light.xaml");
+        keys.UnionWith(XDocument.Load(SourceFiles.Path("Resources", "Styles", "AppStyles.xaml"))
+            .Root!.Elements().Select(element => (string?)element.Attribute(xamlNamespace + "Key")).OfType<string>());
         foreach (string file in SourceFiles.Xaml())
         {
             foreach (Match match in DynamicResourceUsage().Matches(File.ReadAllText(file)))
             {
                 string key = match.Groups["key"].Value;
-                Assert.True(keys.Contains(key), $"{Path.GetFileName(file)} uses undefined theme resource '{key}'.");
+                Assert.True(keys.Contains(key), $"{Path.GetFileName(file)} uses undefined dynamic resource '{key}'.");
             }
         }
     }

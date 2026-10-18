@@ -1,7 +1,8 @@
-<Window
+﻿<Window
     x:Class="Altium.PcbManufacturing.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behaviors="clr-namespace:Altium.PcbManufacturing.Views.Behaviors"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:loc="clr-namespace:Altium.PcbManufacturing.Views.Markup"
@@ -81,9 +82,14 @@
             </Grid>
         </Border>
 
-        <!--  The selected tab is the shared workflow step: each TabItem's Tag is its step, selected through SelectedValue.  -->
+        <!--
+            The selected tab is the workflow step: each TabItem's Tag is its step, selected through SelectedValue. The
+            workflow state decides: a tab is enabled only while its step is available (unlocked, and Preferences valid),
+            and SelectionFollowsSourceBehavior returns the selection to the current step if the state refuses a change.
+        -->
         <TabControl
             Margin="12,12,12,12"
+            behaviors:SelectionFollowsSourceBehavior.IsEnabled="True"
             SelectedValue="{Binding NavigationState.CurrentStep, Mode=TwoWay}"
             SelectedValuePath="Tag">
             <!--  The view is resolved from Resources/Templates/Mappings.xaml.  -->
@@ -95,19 +101,27 @@
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="CogOutline" Style="{StaticResource TabIconStyle}" />
                         <TextBlock VerticalAlignment="Center" Text="{loc:Text Tab_Preferences}" />
+                        <iconPacks:PackIconMaterial Style="{StaticResource StepCompletedIconStyle}" Tag="{Binding NavigationState.IsPreferencesCompleted}" />
                     </StackPanel>
                 </TabItem.Header>
             </TabItem>
-            <TabItem AutomationProperties.Name="{loc:Text Tab_Quote}" Tag="{x:Static vm:WorkflowStep.Quote}">
+            <TabItem
+                AutomationProperties.Name="{loc:Text Tab_Quote}"
+                IsEnabled="{Binding NavigationState.IsQuoteAvailable}"
+                Tag="{x:Static vm:WorkflowStep.Quote}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="FileDocumentOutline" Style="{StaticResource TabIconStyle}" />
                         <TextBlock VerticalAlignment="Center" Text="{loc:Text Tab_Quote}" />
+                        <iconPacks:PackIconMaterial Style="{StaticResource StepCompletedIconStyle}" Tag="{Binding NavigationState.IsQuoteCompleted}" />
                     </StackPanel>
                 </TabItem.Header>
                 <TextBlock Style="{StaticResource PlaceholderTextStyle}" Text="{loc:Text Placeholder_Quote}" />
             </TabItem>
-            <TabItem AutomationProperties.Name="{loc:Text Tab_Order}" Tag="{x:Static vm:WorkflowStep.Order}">
+            <TabItem
+                AutomationProperties.Name="{loc:Text Tab_Order}"
+                IsEnabled="{Binding NavigationState.IsOrderAvailable}"
+                Tag="{x:Static vm:WorkflowStep.Order}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ClipboardCheckOutline" Style="{StaticResource TabIconStyle}" />

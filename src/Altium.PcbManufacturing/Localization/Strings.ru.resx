@@ -27,6 +27,10 @@
   <data name="Placeholder_Quote" xml:space="preserve"><value>Вкладка «Расчёт» появится на следующем этапе.</value></data>
   <data name="Placeholder_Order" xml:space="preserve"><value>Вкладка «Заказ» появится на следующем этапе.</value></data>
 
+  <!-- Workflow steps -->
+  <data name="Workflow_StepLocked" xml:space="preserve"><value>Завершите предыдущий этап, чтобы продолжить.</value></data>
+  <data name="Workflow_StepCompleted" xml:space="preserve"><value>Этап завершён</value></data>
+
   <!-- Preferences form -->
   <data name="Preferences_ProjectBasics" xml:space="preserve"><value>Основные сведения</value></data>
   <data name="Preferences_ProjectName" xml:space="preserve"><value>Название проекта</value></data>

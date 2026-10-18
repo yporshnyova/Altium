@@ -6,8 +6,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!--  Theme palette first; ThemeService replaces it with Dark.xaml at runtime.  -->
-                <ResourceDictionary Source="Resources/Themes/Light.xaml" />
+                <ResourceDictionary Source="Resources/Themes/Dark.xaml" />
                 <ResourceDictionary Source="Resources/Styles/AppStyles.xaml" />
                 <ResourceDictionary Source="Resources/Templates/Mappings.xaml" />
             </ResourceDictionary.MergedDictionaries>

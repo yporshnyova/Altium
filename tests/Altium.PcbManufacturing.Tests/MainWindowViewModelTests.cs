@@ -37,32 +37,32 @@ public sealed class MainWindowViewModelTests : UiCultureTest, IDisposable
     }
 
     [Fact]
-    public void Initially_ShowsEnglishAndLightTheme()
+    public void Initially_ShowsEnglishAndDarkTheme()
     {
-        Assert.Equal(AppLanguage.English, viewModel.SelectedLanguage.Language);
-        Assert.False(viewModel.IsDarkTheme);
+        Assert.Equal(AppLanguage.English, Assert.IsType<LanguageOption>(viewModel.SelectedLanguage).Language);
+        Assert.True(viewModel.IsDarkTheme);
         Assert.Equal(Localizer.SupportedLanguages, viewModel.Languages);
     }
 
     [Fact]
-    public void ToggleTheme_FromLight_AppliesDarkNotifiesAndSaves()
+    public void ToggleTheme_FromDark_AppliesLightNotifiesAndSaves()
     {
         viewModel.ToggleThemeCommand.Execute(null);
 
-        Assert.Equal([AppTheme.Dark], theme.Applied);
-        Assert.True(viewModel.IsDarkTheme);
+        Assert.Equal([AppTheme.Light], theme.Applied);
+        Assert.False(viewModel.IsDarkTheme);
         Assert.Contains(nameof(MainWindowViewModel.IsDarkTheme), changed);
-        Assert.Equal(new UiSettings(AppLanguage.English, AppTheme.Dark), store.Load());
+        Assert.Equal(new UiSettings(AppLanguage.English, AppTheme.Light), store.Load());
     }
 
     [Fact]
-    public void ToggleTheme_Twice_ReturnsToLight()
+    public void ToggleTheme_Twice_ReturnsToDark()
     {
         viewModel.ToggleThemeCommand.Execute(null);
         viewModel.ToggleThemeCommand.Execute(null);
 
-        Assert.Equal([AppTheme.Dark, AppTheme.Light], theme.Applied);
-        Assert.False(viewModel.IsDarkTheme);
+        Assert.Equal([AppTheme.Light, AppTheme.Dark], theme.Applied);
+        Assert.True(viewModel.IsDarkTheme);
         Assert.Equal(UiSettings.Default, store.Load());
     }
 
@@ -72,9 +72,9 @@ public sealed class MainWindowViewModelTests : UiCultureTest, IDisposable
         viewModel.SelectedLanguage = Localizer.SupportedLanguages[1];
 
         Assert.Equal(AppLanguage.Russian, localizer.Language);
-        Assert.Equal(AppLanguage.Russian, viewModel.SelectedLanguage.Language);
+        Assert.Equal(AppLanguage.Russian, Assert.IsType<LanguageOption>(viewModel.SelectedLanguage).Language);
         Assert.Contains(nameof(MainWindowViewModel.SelectedLanguage), changed);
-        Assert.Equal(new UiSettings(AppLanguage.Russian, AppTheme.Light), store.Load());
+        Assert.Equal(new UiSettings(AppLanguage.Russian, AppTheme.Dark), store.Load());
     }
 
     [Fact]

@@ -59,6 +59,7 @@ public sealed partial class PreferencesViewModel : ObservableValidator
         this.preferences = preferences;
         this.preferences.PropertyChanged += OnPreferencesPropertyChanged;
         ErrorsChanged += OnErrorsChanged;
+        this.navigation.SetReadinessCheck(WorkflowStep.Preferences, AreAllFieldsValid);
     }
 
     public IReadOnlyList<PcbMaterial> Materials { get; }
@@ -190,20 +191,34 @@ public sealed partial class PreferencesViewModel : ObservableValidator
     }
 
     /// <summary>
-    /// Validates every field and, when all are valid, continues to the Quote step.
+    /// Validates every field and, when all are valid, completes the Preferences step: Quote is unlocked and opened.
     /// </summary>
+    /// <remarks>Nothing is written to disk; the preferences stay in the shared state for this session.</remarks>
     [RelayCommand]
     private void SaveAndContinue()
+    {
+        if (ValidateBeforeContinuing())
+        {
+            navigation.CompleteStep(WorkflowStep.Preferences);
+        }
+    }
+
+    // Explicit validation for Save & Continue: every field is validated with visible messages and, if any is invalid,
+    // the view is asked to focus the first error.
+    private bool ValidateBeforeContinuing()
     {
         ValidateAllProperties();
         if (HasErrors)
         {
             InvalidSubmitCount++;
-            return;
+            return false;
         }
 
-        navigation.CurrentStep = WorkflowStep.Quote;
+        return true;
     }
+
+    private bool AreAllFieldsValid() =>
+        Validator.TryValidateObject(this, new ValidationContext(this), validationResults: null, validateAllProperties: true);
 
     private void OnPreferencesPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -239,6 +254,8 @@ public sealed partial class PreferencesViewModel : ObservableValidator
                 OnPropertyChanged(nameof(SelectedBoardThickness));
                 break;
         }
+
+        navigation.RefreshAvailability();
     }
 
     // Localized texts follow the language. Fields that currently show an error are re-validated so the message is

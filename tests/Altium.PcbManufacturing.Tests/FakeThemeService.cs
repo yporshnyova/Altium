@@ -6,7 +6,7 @@ namespace Altium.PcbManufacturing.Tests;
 /// <summary>
 /// Records applied themes without touching WPF resources.
 /// </summary>
-internal sealed class FakeThemeService(AppTheme initial = AppTheme.Light) : IThemeService
+internal sealed class FakeThemeService(AppTheme initial = AppTheme.Dark) : IThemeService
 {
     public AppTheme Theme { get; private set; } = initial;
 

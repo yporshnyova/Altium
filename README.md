@@ -3,7 +3,7 @@
 A WPF desktop application that simulates creating a PCB (Printed Circuit Board) manufacturing order.
 It will provide a single window with three tabs: **Preferences**, **Quote**, and **Order**.
 
-> **Current status: Phase 3.5 — Preferences, English/Russian localization and light/dark themes are implemented. Quote and Order are placeholders.**
+> **Current status: Phase 3.6 — sequential Preferences → Quote → Order workflow, Preferences, English/Russian localization and light/dark themes are implemented. Quote and Order are placeholders.**
 
 ## Assumptions
 
@@ -23,6 +23,11 @@ The assignment leaves these open; they are documented choices pending review:
   session only (nothing is written to disk). On failure it stays on Preferences and focuses the first invalid field.
 - **Reset to Defaults**: restores `PCB-001`, an empty postcode and notes, and the first catalog entry of each option;
   it asks for confirmation only when something differs from those defaults.
+- **Workflow**: Preferences → Quote → Order are sequential steps (`ViewModels/WorkflowNavigationState.cs`). Quote and
+  Order start locked; a valid Save & Continue completes Preferences and unlocks Quote. Unlocked steps stay unlocked
+  when going back, and nothing is cleared. A step is available only while every earlier step is valid: if Preferences
+  becomes invalid, the unlocked Quote tab is disabled at once and re-enabled as soon as the input is corrected (no new
+  Save & Continue needed). Order stays locked until the Quote step can be completed.
 
 ## Localization and Themes
 
@@ -35,7 +40,8 @@ The assignment leaves these open; they are documented choices pending review:
   through `DynamicResource` and swapped at runtime by `Services/ThemeService.cs`.
 - **Icons**: Material icons from `MahApps.Metro.IconPacks.Material` (only this pack and its `Core` dependency).
 - **Saved UI preferences**: language and theme only, in `%LOCALAPPDATA%\Altium\PcbManufacturing\ui-settings.json`;
-  a missing or invalid file falls back to English and the light theme. Manufacturing preferences are not saved.
+  a missing or invalid file falls back to English and the dark theme (the default). Manufacturing preferences are
+  not saved.
 
 ## Technology Stack
 

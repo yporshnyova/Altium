@@ -28,6 +28,10 @@
   <data name="Placeholder_Quote" xml:space="preserve"><value>The Quote tab will be available in a later phase.</value></data>
   <data name="Placeholder_Order" xml:space="preserve"><value>The Order tab will be available in a later phase.</value></data>
 
+  <!-- Workflow steps -->
+  <data name="Workflow_StepLocked" xml:space="preserve"><value>Complete the previous step to continue.</value></data>
+  <data name="Workflow_StepCompleted" xml:space="preserve"><value>Step completed</value></data>
+
   <!-- Preferences form -->
   <data name="Preferences_ProjectBasics" xml:space="preserve"><value>Project basics</value></data>
   <data name="Preferences_ProjectName" xml:space="preserve"><value>Project name</value></data>

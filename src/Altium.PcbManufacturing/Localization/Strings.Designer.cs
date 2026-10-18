@@ -510,6 +510,24 @@ namespace Altium.PcbManufacturing.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Complete the previous step to continue..
+        /// </summary>
+        public static string Workflow_StepLocked {
+            get {
+                return ResourceManager.GetString("Workflow_StepLocked", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Step completed.
+        /// </summary>
+        public static string Workflow_StepCompleted {
+            get {
+                return ResourceManager.GetString("Workflow_StepCompleted", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Use the NN-NNN format..
         /// </summary>
         public static string Validation_PostcodeFormat {
