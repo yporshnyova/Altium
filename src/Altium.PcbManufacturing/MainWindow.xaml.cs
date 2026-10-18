@@ -1,11 +1,15 @@
 using System.Windows;
+using Altium.PcbManufacturing.ViewModels;
 
 namespace Altium.PcbManufacturing;
 
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    public MainWindow(MainWindowViewModel viewModel)
     {
+        ArgumentNullException.ThrowIfNull(viewModel);
+
         InitializeComponent();
+        DataContext = viewModel;
     }
 }

@@ -12,6 +12,16 @@ internal static partial class PcbCatalogValidator
     {
         List<string> errors = [];
 
+        // A missing value deserializes as 0, so this also reports an absent basePriceUsd.
+        if (catalog.BasePriceUsd <= 0)
+        {
+            errors.Add("basePriceUsd must be greater than zero.");
+        }
+        else if (decimal.Round(catalog.BasePriceUsd, 2) != catalog.BasePriceUsd)
+        {
+            errors.Add("basePriceUsd must have at most two decimal places.");
+        }
+
         if (HasEntries(catalog.Materials, "materials", errors))
         {
             ValidateIds(catalog.Materials, m => m?.Id, "materials", errors);

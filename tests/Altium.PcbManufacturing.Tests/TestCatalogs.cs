@@ -6,6 +6,7 @@ internal static class TestCatalogs
 {
     public const string ValidJson = """
         {
+          "basePriceUsd": 149.00,
           "materials": [
             { "id": "fr4", "name": "FR-4", "priceMultiplier": 1.0, "productionDays": 5 },
             { "id": "rogers", "name": "Rogers", "priceMultiplier": 2.5, "productionDays": 12 }
@@ -31,6 +32,7 @@ internal static class TestCatalogs
         """;
 
     public static PcbCatalog Create() => new(
+        BasePriceUsd: 149.00m,
         Materials:
         [
             new PcbMaterial("fr4", "FR-4", 1.0m, 5),

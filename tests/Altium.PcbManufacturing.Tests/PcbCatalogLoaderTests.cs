@@ -12,6 +12,14 @@ public sealed class PcbCatalogLoaderTests : IDisposable
     public void Dispose() => File.Delete(filePath);
 
     [Fact]
+    public async Task LoadAsync_ValidCatalog_LoadsBasePrice()
+    {
+        PcbCatalog catalog = await LoadAsync(TestCatalogs.ValidJson);
+
+        Assert.Equal(149.00m, catalog.BasePriceUsd);
+    }
+
+    [Fact]
     public async Task LoadAsync_ValidCatalog_LoadsMaterials()
     {
         PcbCatalog catalog = await LoadAsync(TestCatalogs.ValidJson);
@@ -57,6 +65,7 @@ public sealed class PcbCatalogLoaderTests : IDisposable
         PcbCatalog catalog = await new PcbCatalogLoader(PcbCatalogLoader.DefaultCatalogPath)
             .LoadAsync(TestContext.Current.CancellationToken);
 
+        Assert.Equal(149.00m, catalog.BasePriceUsd);
         Assert.InRange(catalog.Materials.Count, 2, 3);
         Assert.InRange(catalog.SolderMaskColors.Count, 2, 3);
         Assert.InRange(catalog.BoardThicknesses.Count, 2, 3);
@@ -104,6 +113,9 @@ public sealed class PcbCatalogLoaderTests : IDisposable
 
     public static TheoryData<string, string> InvalidEntries => new()
     {
+        { "missing base price", "basePriceUsd must be greater than zero." },
+        { "negative base price", "basePriceUsd must be greater than zero." },
+        { "fractional-cent base price", "basePriceUsd must have at most two decimal places." },
         { "missing materials", "materials must contain at least one entry." },
         { "empty solder mask colors", "solderMaskColors must contain at least one entry." },
         { "missing material id", "materials[0].id is required." },
@@ -124,6 +136,9 @@ public sealed class PcbCatalogLoaderTests : IDisposable
     {
         CatalogLoadException ex = await LoadInvalidAsync(Mutate(scenario switch
         {
+            "missing base price" => c => c.Remove("basePriceUsd"),
+            "negative base price" => c => c["basePriceUsd"] = -1m,
+            "fractional-cent base price" => c => c["basePriceUsd"] = 149.005m,
             "missing materials" => c => c.Remove("materials"),
             "empty solder mask colors" => c => c["solderMaskColors"] = new JsonArray(),
             "missing material id" => c => c["materials"]![0]!.AsObject().Remove("id"),

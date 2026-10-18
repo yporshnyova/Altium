@@ -1,0 +1,55 @@
+<!--
+    Light theme palette. Light.xaml and Dark.xaml define the same semantic keys (a unit test enforces this); styles use
+    them through DynamicResource so ThemeService can swap this dictionary at runtime. Brushes are frozen: never modified.
+    Text colours meet WCAG AA contrast on the card and window backgrounds.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+    mc:Ignorable="po">
+
+    <!--  Surfaces  -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" po:Freeze="True" Color="#F3F5F8" />
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" po:Freeze="True" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="CardBackgroundBrush" po:Freeze="True" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="CardBorderBrush" po:Freeze="True" Color="#D5DAE1" />
+    <SolidColorBrush x:Key="DividerBrush" po:Freeze="True" Color="#E3E7EC" />
+    <SolidColorBrush x:Key="PopupBackgroundBrush" po:Freeze="True" Color="#FFFFFF" />
+
+    <!--  Inputs  -->
+    <SolidColorBrush x:Key="ControlBackgroundBrush" po:Freeze="True" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ControlBorderBrush" po:Freeze="True" Color="#8F98A3" />
+    <SolidColorBrush x:Key="ControlHoverBorderBrush" po:Freeze="True" Color="#5F6873" />
+    <SolidColorBrush x:Key="ControlFocusBorderBrush" po:Freeze="True" Color="#0B5CAD" />
+    <SolidColorBrush x:Key="ControlDisabledBackgroundBrush" po:Freeze="True" Color="#F0F2F5" />
+    <SolidColorBrush x:Key="TextSelectionBrush" po:Freeze="True" Color="#0B5CAD" />
+    <SolidColorBrush x:Key="SwatchBorderBrush" po:Freeze="True" Color="#8A939E" />
+
+    <!--  List and tab states  -->
+    <SolidColorBrush x:Key="ItemHoverBackgroundBrush" po:Freeze="True" Color="#EAF1FB" />
+    <SolidColorBrush x:Key="ItemSelectedBackgroundBrush" po:Freeze="True" Color="#D6E6FA" />
+    <SolidColorBrush x:Key="TabHoverBackgroundBrush" po:Freeze="True" Color="#E6EAF0" />
+
+    <!--  Text  -->
+    <SolidColorBrush x:Key="TextPrimaryBrush" po:Freeze="True" Color="#1F2328" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" po:Freeze="True" Color="#57606A" />
+    <SolidColorBrush x:Key="TextDisabledBrush" po:Freeze="True" Color="#8C959F" />
+    <SolidColorBrush x:Key="ErrorBrush" po:Freeze="True" Color="#B42318" />
+
+    <!--  Accent and buttons  -->
+    <SolidColorBrush x:Key="AccentBrush" po:Freeze="True" Color="#0B5CAD" />
+    <SolidColorBrush x:Key="AccentHoverBrush" po:Freeze="True" Color="#094C8F" />
+    <SolidColorBrush x:Key="AccentPressedBrush" po:Freeze="True" Color="#083D73" />
+    <SolidColorBrush x:Key="AccentTextBrush" po:Freeze="True" Color="#0B5CAD" />
+    <SolidColorBrush x:Key="OnAccentTextBrush" po:Freeze="True" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ButtonBorderBrush" po:Freeze="True" Color="#B8C0CA" />
+    <SolidColorBrush x:Key="SecondaryHoverBrush" po:Freeze="True" Color="#EEF1F5" />
+    <SolidColorBrush x:Key="SecondaryPressedBrush" po:Freeze="True" Color="#E3E7EC" />
+
+    <!--  Scroll bars  -->
+    <SolidColorBrush x:Key="ScrollThumbBrush" po:Freeze="True" Color="#C2C8CF" />
+    <SolidColorBrush x:Key="ScrollThumbHoverBrush" po:Freeze="True" Color="#9AA2AC" />
+
+</ResourceDictionary>

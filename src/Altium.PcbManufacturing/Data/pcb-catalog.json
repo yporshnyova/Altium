@@ -1,4 +1,5 @@
 {
+  "basePriceUsd": 149.00,
   "materials": [
     { "id": "fr4-standard", "name": "FR-4 Standard", "priceMultiplier": 1.00, "productionDays": 5 },
     { "id": "fr4-high-tg", "name": "FR-4 High Tg", "priceMultiplier": 1.25, "productionDays": 7 },

@@ -9,10 +9,19 @@ namespace Altium.PcbManufacturing.Models;
 /// Registered once as a DI singleton. Feature ViewModels receive it through constructor injection,
 /// expose it (or wrap its properties) for binding, and subscribe to <see cref="ObservableObject.PropertyChanged"/>
 /// to refresh derived values. Selections reference entries of the <see cref="PcbCatalog"/>; they are never copies.
-/// Expected to be updated on the UI thread.
+/// It is also the single owner of the default values. Expected to be updated on the UI thread.
 /// </remarks>
 public sealed partial class ManufacturingPreferences : ObservableObject
 {
+    public const string DefaultProjectName = "PCB-001";
+
+    private readonly PcbMaterial defaultMaterial;
+    private readonly SolderMaskColor defaultSolderMaskColor;
+    private readonly BoardThickness defaultBoardThickness;
+
+    [ObservableProperty]
+    private string projectName = DefaultProjectName;
+
     [ObservableProperty]
     private PcbMaterial selectedMaterial;
 
@@ -25,12 +34,37 @@ public sealed partial class ManufacturingPreferences : ObservableObject
     [ObservableProperty]
     private string postcode = string.Empty;
 
+    [ObservableProperty]
+    private string notes = string.Empty;
+
     public ManufacturingPreferences(PcbCatalog catalog)
     {
         ArgumentNullException.ThrowIfNull(catalog);
 
-        selectedMaterial = catalog.Materials[0];
-        selectedSolderMaskColor = catalog.SolderMaskColors[0];
-        selectedBoardThickness = catalog.BoardThicknesses[0];
+        defaultMaterial = catalog.Materials[0];
+        defaultSolderMaskColor = catalog.SolderMaskColors[0];
+        defaultBoardThickness = catalog.BoardThicknesses[0];
+
+        selectedMaterial = defaultMaterial;
+        selectedSolderMaskColor = defaultSolderMaskColor;
+        selectedBoardThickness = defaultBoardThickness;
+    }
+
+    public bool MatchesDefaults() =>
+        ProjectName == DefaultProjectName
+        && Postcode.Length == 0
+        && SelectedMaterial == defaultMaterial
+        && SelectedSolderMaskColor == defaultSolderMaskColor
+        && SelectedBoardThickness == defaultBoardThickness
+        && Notes.Length == 0;
+
+    public void ResetToDefaults()
+    {
+        ProjectName = DefaultProjectName;
+        Postcode = string.Empty;
+        SelectedMaterial = defaultMaterial;
+        SelectedSolderMaskColor = defaultSolderMaskColor;
+        SelectedBoardThickness = defaultBoardThickness;
+        Notes = string.Empty;
     }
 }

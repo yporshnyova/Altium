@@ -24,6 +24,12 @@ public sealed class ManufacturingPreferencesTests
     }
 
     [Fact]
+    public void Constructor_StartsWithDefaultProjectName() => Assert.Equal("PCB-001", preferences.ProjectName);
+
+    [Fact]
+    public void Constructor_StartsWithEmptyNotes() => Assert.Equal(string.Empty, preferences.Notes);
+
+    [Fact]
     public void Constructor_StartsWithEmptyPostcode() => Assert.Equal(string.Empty, preferences.Postcode);
 
     [Fact]
@@ -63,8 +69,72 @@ public sealed class ManufacturingPreferencesTests
     }
 
     [Fact]
+    public void ProjectName_Changed_UpdatesStateAndNotifies()
+    {
+        preferences.ProjectName = "Sensor board";
+
+        Assert.Equal("Sensor board", preferences.ProjectName);
+        Assert.Equal([nameof(ManufacturingPreferences.ProjectName)], changedProperties);
+    }
+
+    [Fact]
+    public void Notes_Changed_UpdatesStateAndNotifies()
+    {
+        preferences.Notes = "Rush order";
+
+        Assert.Equal("Rush order", preferences.Notes);
+        Assert.Equal([nameof(ManufacturingPreferences.Notes)], changedProperties);
+    }
+
+    [Fact]
+    public void MatchesDefaults_Initially_IsTrue() => Assert.True(preferences.MatchesDefaults());
+
+    [Fact]
+    public void MatchesDefaults_AfterAnyChange_IsFalse()
+    {
+        Action<ManufacturingPreferences>[] changes =
+        [
+            p => p.ProjectName = "Other",
+            p => p.Postcode = "55-220",
+            p => p.SelectedMaterial = catalog.Materials[1],
+            p => p.SelectedSolderMaskColor = catalog.SolderMaskColors[1],
+            p => p.SelectedBoardThickness = catalog.BoardThicknesses[1],
+            p => p.Notes = "x",
+        ];
+
+        foreach (Action<ManufacturingPreferences> change in changes)
+        {
+            ManufacturingPreferences changed = new(catalog);
+            change(changed);
+            Assert.False(changed.MatchesDefaults());
+        }
+    }
+
+    [Fact]
+    public void ResetToDefaults_RestoresDefaultsAndNotifiesChangedValues()
+    {
+        preferences.ProjectName = "Other";
+        preferences.SelectedMaterial = catalog.Materials[1];
+        preferences.Notes = "x";
+        changedProperties.Clear();
+
+        preferences.ResetToDefaults();
+
+        Assert.True(preferences.MatchesDefaults());
+        Assert.Equal(
+            [
+                nameof(ManufacturingPreferences.ProjectName),
+                nameof(ManufacturingPreferences.SelectedMaterial),
+                nameof(ManufacturingPreferences.Notes),
+            ],
+            changedProperties);
+    }
+
+    [Fact]
     public void AssigningUnchangedValues_DoesNotNotify()
     {
+        preferences.Notes = string.Empty;
+        preferences.ProjectName = ManufacturingPreferences.DefaultProjectName;
         preferences.SelectedMaterial = catalog.Materials[0];
         preferences.SelectedSolderMaskColor = catalog.SolderMaskColors[0];
         preferences.SelectedBoardThickness = catalog.BoardThicknesses[0];
