@@ -217,7 +217,7 @@
     <value>Included</value>
   </data>
   <data name="Days_Format" xml:space="preserve">
-    <value>{0} d</value>
+    <value>{0} days</value>
   </data>
   <data name="Thickness_Millimeters" xml:space="preserve">
     <value>{0:0.0#} mm</value>
@@ -361,6 +361,6 @@
     <value>Side view</value>
   </data>
   <data name="Boards_Format" xml:space="preserve">
-    <value>{0} pcs</value>
+    <value>{0} pcs.</value>
   </data>
 </root>

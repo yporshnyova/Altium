@@ -5,24 +5,16 @@ namespace Altium.PcbManufacturing.Models;
 /// <summary>
 /// The user's current manufacturing selections, shared by all tabs.
 /// </summary>
-/// <remarks>
-/// Registered once as a DI singleton. Feature ViewModels receive it through constructor injection,
-/// expose it (or wrap its properties) for binding, and subscribe to <see cref="ObservableObject.PropertyChanged"/>
-/// to refresh derived values. Selections reference entries of the <see cref="PcbCatalog"/>; they are never copies.
-/// It is also the single owner of the default values. Expected to be updated on the UI thread.
-/// </remarks>
+
 public sealed partial class ManufacturingPreferences : ObservableObject
 {
-    public const string DefaultProjectName = "PCB-001";
-
-    public const int DefaultQuantity = 10;
-
+    private const string defaultProjectName = "PCB-001";
     private readonly PcbMaterial defaultMaterial;
     private readonly SolderMaskColor defaultSolderMaskColor;
     private readonly BoardThickness defaultBoardThickness;
 
     [ObservableProperty]
-    private string projectName = DefaultProjectName;
+    private string projectName = defaultProjectName;
 
     [ObservableProperty]
     private PcbMaterial selectedMaterial;
@@ -42,6 +34,8 @@ public sealed partial class ManufacturingPreferences : ObservableObject
     [ObservableProperty]
     private string notes = string.Empty;
 
+    public const int DefaultQuantity = 10;
+
     public ManufacturingPreferences(PcbCatalog catalog)
     {
         ArgumentNullException.ThrowIfNull(catalog);
@@ -56,7 +50,7 @@ public sealed partial class ManufacturingPreferences : ObservableObject
     }
 
     public bool MatchesDefaults() =>
-        ProjectName == DefaultProjectName
+        ProjectName == defaultProjectName
         && Postcode.Length == 0
         && Quantity == DefaultQuantity
         && SelectedMaterial == defaultMaterial
@@ -66,7 +60,7 @@ public sealed partial class ManufacturingPreferences : ObservableObject
 
     public void ResetToDefaults()
     {
-        ProjectName = DefaultProjectName;
+        ProjectName = defaultProjectName;
         Postcode = string.Empty;
         Quantity = DefaultQuantity;
         SelectedMaterial = defaultMaterial;

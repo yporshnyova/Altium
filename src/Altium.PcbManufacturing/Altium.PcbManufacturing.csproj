@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>Assets\Branding\pcb-manufacturing.ico</ApplicationIcon>
+    <ApplicationIcon>Icons\pcb-manufacturing.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +21,7 @@
 
   <!-- The same icon as a WPF resource for the window title bar (MainWindow.Icon). -->
   <ItemGroup>
-    <Resource Include="Assets\Branding\pcb-manufacturing.ico" />
+    <Resource Include="Icons\pcb-manufacturing.ico" />
   </ItemGroup>
 
   <!-- Strings.Designer.cs is the strongly typed accessor; Visual Studio regenerates it when Strings.resx is edited. -->

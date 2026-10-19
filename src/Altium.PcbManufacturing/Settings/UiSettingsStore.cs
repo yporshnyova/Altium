@@ -74,7 +74,6 @@ public sealed class UiSettingsStore
     private static TEnum ReadEnum<TEnum>(JsonElement root, string name, TEnum fallback)
         where TEnum : struct, Enum
     {
-        // Only defined names are accepted
         return root.TryGetProperty(name, out JsonElement value)
             && value.ValueKind == JsonValueKind.String
             && Enum.GetNames<TEnum>().FirstOrDefault(n => n.Equals(value.GetString(), StringComparison.OrdinalIgnoreCase)) is { } match

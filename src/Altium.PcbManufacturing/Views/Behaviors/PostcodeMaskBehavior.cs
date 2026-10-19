@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -7,17 +6,19 @@ using System.Windows.Input;
 namespace Altium.PcbManufacturing.Views.Behaviors;
 
 /// <summary>
-/// Applies the <see cref="PostcodeMask"/> rules to a <see cref="TextBox"/>: <c>local:PostcodeMaskBehavior.IsEnabled="True"</c>.
+/// Masks a <see cref="TextBox"/> as a Polish <c>NN-NNN</c> postcode: <c>local:PostcodeMaskBehavior.IsEnabled="True"</c>.
 /// </summary>
 /// <remarks>
-/// Every way user input can change the text is routed through the mask: typed and IME text (PreviewTextInput, with the
-/// IME disabled since only digits are valid), Space (which bypasses PreviewTextInput), Backspace/Delete and their Ctrl
-/// variants, paste, and cut. Drag-and-drop and undo are disabled, as both would insert text the mask has not checked.
-/// The result is written with SetCurrentValue so the TwoWay binding is kept and updates its source. View-only input
-/// handling: the business rule itself is validated by the view model.
+/// Every edit is applied to the digits only and the result is re-formatted, so the hyphen appears after two digits and is
+/// never edited directly. Typed or pasted text must be digits, optionally with the hyphen in its place (<c>55-220</c>);
+/// anything else is rejected as a whole. Drag-and-drop and undo are disabled, as they would bypass the mask. The
+/// business rule itself is validated by the view model.
 /// </remarks>
 public static class PostcodeMaskBehavior
 {
+    private const int maxDigits = 5;
+    private const int hyphenIndex = 2;
+
     public static readonly DependencyProperty IsEnabledProperty = DependencyProperty.RegisterAttached(
         "IsEnabled",
         typeof(bool),
@@ -60,85 +61,93 @@ public static class PostcodeMaskBehavior
 
     private static void OnPreviewTextInput(object sender, TextCompositionEventArgs e)
     {
-        var textBox = (TextBox)sender;
-        if (PostcodeMask.TryInsert(textBox.Text, textBox.SelectionStart, textBox.SelectionLength, e.Text, out PostcodeEdit edit))
-        {
-            Apply(textBox, edit);
-        }
-
-        e.Handled = true;
-    }
-
-    private static void OnPreviewKeyDown(object sender, KeyEventArgs e)
-    {
-        var textBox = (TextBox)sender;
-        bool control = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
-        PostcodeDeletion deletion;
-        switch (e.Key)
-        {
-            case Key.Space:
-                e.Handled = true;
-                return;
-            case Key.Back when (Keyboard.Modifiers & ModifierKeys.Alt) == 0:
-                deletion = control ? PostcodeDeletion.ToStart : PostcodeDeletion.Backward;
-                break;
-            // Shift+Delete is Cut; it is handled as a command in OnPreviewExecuted.
-            case Key.Delete when (Keyboard.Modifiers & ModifierKeys.Shift) == 0:
-                deletion = control ? PostcodeDeletion.ToEnd : PostcodeDeletion.Forward;
-                break;
-            default:
-                return;
-        }
-
-        Apply(textBox, PostcodeMask.Delete(textBox.Text, textBox.SelectionStart, textBox.SelectionLength, deletion));
+        Insert((TextBox)sender, e.Text);
         e.Handled = true;
     }
 
     private static void OnPasting(object sender, DataObjectPastingEventArgs e)
     {
-        var textBox = (TextBox)sender;
         e.CancelCommand();
-        if (e.SourceDataObject.GetData(DataFormats.UnicodeText, true) is string pasted
-            && PostcodeMask.TryInsert(textBox.Text, textBox.SelectionStart, textBox.SelectionLength, pasted, out PostcodeEdit edit))
+        if (e.DataObject.GetData(DataFormats.UnicodeText, true) is string pasted)
         {
-            Apply(textBox, edit);
+            Insert((TextBox)sender, pasted.Trim());
         }
+    }
+
+    private static void OnPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        // Shift+Delete is Cut, handled in OnPreviewExecuted.
+        if (e.Key == Key.Delete && (Keyboard.Modifiers & ModifierKeys.Shift) != 0)
+        {
+            return;
+        }
+
+        var textBox = (TextBox)sender;
+        string text = textBox.Text;
+        int start = textBox.SelectionStart;
+        switch (e.Key)
+        {
+            // Space bypasses PreviewTextInput.
+            case Key.Space:
+                break;
+            case Key.Back or Key.Delete when textBox.SelectionLength > 0:
+                Replace(textBox, start, textBox.SelectionLength, string.Empty);
+                break;
+
+            // With no selection, Backspace and Delete step over the hyphen and remove the digit beyond it.
+            case Key.Back when start > 0:
+                int from = Math.Max(0, start - (text[start - 1] == '-' ? 2 : 1));
+                Replace(textBox, from, start - from, string.Empty);
+                break;
+            case Key.Delete when start < text.Length:
+                int to = Math.Min(text.Length, start + (text[start] == '-' ? 2 : 1));
+                Replace(textBox, start, to - start, string.Empty);
+                break;
+            default:
+                return;
+        }
+
+        e.Handled = true;
     }
 
     private static void OnPreviewExecuted(object sender, ExecutedRoutedEventArgs e)
     {
-        if (e.Command != ApplicationCommands.Cut)
+        if (e.Command == ApplicationCommands.Cut)
         {
-            return;
+            var textBox = (TextBox)sender;
+            ApplicationCommands.Copy.Execute(null, textBox);
+            Replace(textBox, textBox.SelectionStart, textBox.SelectionLength, string.Empty);
+            e.Handled = true;
         }
-
-        var textBox = (TextBox)sender;
-        e.Handled = true;
-        if (textBox.SelectionLength == 0)
-        {
-            return;
-        }
-
-        try
-        {
-            Clipboard.SetText(textBox.SelectedText);
-        }
-        catch (ExternalException)
-        {
-            // The clipboard is held by another process; keep the text rather than lose the cut selection.
-            return;
-        }
-
-        Apply(textBox, PostcodeMask.Delete(textBox.Text, textBox.SelectionStart, textBox.SelectionLength, PostcodeDeletion.Backward));
     }
 
-    private static void Apply(TextBox textBox, PostcodeEdit edit)
+    private static void Insert(TextBox textBox, string input)
     {
-        if (textBox.Text != edit.Text)
+        if (input.Length > hyphenIndex && input[hyphenIndex] == '-')
         {
-            textBox.SetCurrentValue(TextBox.TextProperty, edit.Text);
+            input = input.Remove(hyphenIndex, 1);
         }
 
-        textBox.Select(edit.CaretIndex, 0);
+        if (input.Length > 0 && input.All(char.IsAsciiDigit))
+        {
+            Replace(textBox, textBox.SelectionStart, textBox.SelectionLength, input);
+        }
     }
+
+    private static void Replace(TextBox textBox, int start, int length, string digits)
+    {
+        string text = textBox.Text;
+        string beforeCaret = DigitsOf(text[..start]) + digits;
+        string all = beforeCaret + DigitsOf(text[(start + length)..]);
+        if (all.Length > maxDigits)
+        {
+            return;
+        }
+
+        // SetCurrentValue keeps the TwoWay binding, which then updates its source.
+        textBox.SetCurrentValue(TextBox.TextProperty, all.Length < hyphenIndex ? all : all.Insert(hyphenIndex, "-"));
+        textBox.Select(beforeCaret.Length < hyphenIndex ? beforeCaret.Length : beforeCaret.Length + 1, 0);
+    }
+
+    private static string DigitsOf(string text) => string.Concat(text.Where(char.IsAsciiDigit));
 }

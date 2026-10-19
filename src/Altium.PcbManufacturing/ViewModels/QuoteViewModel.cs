@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Altium.PcbManufacturing.Formatting;
 using Altium.PcbManufacturing.Localization;
 using Altium.PcbManufacturing.Models;
 using Altium.PcbManufacturing.Services;

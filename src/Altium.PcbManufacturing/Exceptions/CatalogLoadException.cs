@@ -1,4 +1,4 @@
-namespace Altium.PcbManufacturing.Services;
+namespace Altium.PcbManufacturing.Exceptions;
 
 /// <summary>
 /// Thrown when the predefined manufacturing catalog cannot be read, parsed or validated.

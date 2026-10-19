@@ -9,50 +9,63 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace Altium.PcbManufacturing.Tests;
 
 /// <summary>
-/// The view-only input filters: the postcode mask's editing rules, then both TextBox behaviors driven by real routed
-/// input events on an STA thread. The TextBoxes are not shown, so focus, real keyboard modifiers (Ctrl shortcuts) and
-/// rendering are left to manual verification. The view models validate whatever text gets through.
+/// The view-only input filters: both TextBox behaviors driven by real routed input events on an STA thread. The
+/// TextBoxes are not shown, so focus, real keyboard modifiers (Ctrl shortcuts), the clipboard (Cut) and rendering are
+/// left to manual verification. The view models validate whatever text gets through.
 /// </summary>
 public sealed partial class TextInputBehaviorTests
 {
-    // Postcode mask rules
-
-    [Fact]
-    public void PostcodeMask_TypingFiveDigits_InsertsTheHyphen()
-    {
-        string text = string.Empty;
-        int caret = 0;
-        foreach (char digit in "55220")
-        {
-            Assert.True(PostcodeMask.TryInsert(text, caret, 0, digit.ToString(), out PostcodeEdit edit));
-            (text, caret) = (edit.Text, edit.CaretIndex);
-        }
-
-        Assert.Equal(new PostcodeEdit("55-220", 6), new PostcodeEdit(text, caret));
-    }
-
-    [Theory]
-    [InlineData("55-220", 6, 0, "1")] // A sixth digit.
-    [InlineData("55-2", 4, 0, "A")]
-    [InlineData("", 0, 0, "55A220")] // Pasted text is rejected as a whole, not filtered.
-    [InlineData("", 0, 0, "552201")]
-    public void PostcodeMask_RejectsInputThatCannotFormAPostcode(string text, int start, int length, string input) =>
-        Assert.False(PostcodeMask.TryInsert(text, start, length, input, out _));
-
-    [Theory]
-    [InlineData("55-220", 3, 2, "9", "55-90", 4)] // Typing over a selection.
-    [InlineData("", 0, 0, " 55-220\r\n", "55-220", 6)] // Pasting a copied postcode.
-    public void PostcodeMask_AcceptsValidInput(string text, int start, int length, string input, string expected, int caret)
-    {
-        Assert.True(PostcodeMask.TryInsert(text, start, length, input, out PostcodeEdit edit));
-        Assert.Equal(new PostcodeEdit(expected, caret), edit);
-    }
-
-    [Fact]
-    public void PostcodeMask_BackspaceAfterTheHyphen_RemovesTheDigitBeforeIt() =>
-        Assert.Equal(new PostcodeEdit("52-20", 1), PostcodeMask.Delete("55-220", 3, 0, PostcodeDeletion.Backward));
-
     // Postcode TextBox
+
+    [Theory]
+    [InlineData("55-220", "1")] // A sixth digit.
+    [InlineData("55-2", "A")]
+    [InlineData("55-2", "-")]
+    [InlineData("", "55A220")] // Rejected as a whole, not filtered.
+    [InlineData("", "5-5220")]
+    [InlineData("", "552201")]
+    public void PostcodeBox_RejectsInputThatCannotFormAPostcode(string text, string input) => Sta.Run(() =>
+    {
+        TextBox typed = CreateTextBox(PostcodeMaskBehavior.SetIsEnabled, text);
+        TextBox pasted = CreateTextBox(PostcodeMaskBehavior.SetIsEnabled, text);
+
+        Type(typed, input);
+        Paste(pasted, input);
+
+        Assert.Equal(text, typed.Text);
+        Assert.Equal(text, pasted.Text);
+    });
+
+    [Theory]
+    [InlineData("", 0, 0, " 55-220\r\n", "55-220", 6)] // Pasting a copied postcode.
+    [InlineData("", 0, 0, "55220", "55-220", 6)]
+    [InlineData("55-220", 3, 2, "9", "55-90", 4)] // Replacing a selection.
+    [InlineData("55-220", 0, 6, "12", "12-", 3)]
+    public void PostcodeBox_PastesOverTheSelection(string text, int start, int length, string input, string expected, int caret) => Sta.Run(() =>
+    {
+        TextBox textBox = CreateTextBox(PostcodeMaskBehavior.SetIsEnabled, text);
+        textBox.Select(start, length);
+
+        Paste(textBox, input);
+
+        Assert.Equal(expected, textBox.Text);
+        Assert.Equal(caret, textBox.CaretIndex);
+    });
+
+    [Theory]
+    [InlineData(Key.Back, 3, 0, "52-20", 1)] // Steps over the hyphen.
+    [InlineData(Key.Back, 6, 0, "55-22", 5)]
+    [InlineData(Key.Delete, 2, 0, "55-20", 3)] // Steps over the hyphen.
+    [InlineData(Key.Delete, 1, 3, "52-0", 1)] // Deletes the selection.
+    public void PostcodeBox_DeletesDigitsAndReformats(Key key, int start, int length, string expected, int caret) => Sta.Run(() =>
+    {
+        TextBox textBox = CreateTextBox(PostcodeMaskBehavior.SetIsEnabled, "55-220");
+        textBox.Select(start, length);
+
+        Assert.True(PressKey(textBox, key));
+        Assert.Equal(expected, textBox.Text);
+        Assert.Equal(caret, textBox.CaretIndex);
+    });
 
     [Fact]
     public void PostcodeBox_EditsAreFormattedAndReachTheTwoWayBoundSource() => Sta.Run(() =>
@@ -66,18 +79,13 @@ public sealed partial class TextInputBehaviorTests
             UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
         });
 
-        foreach (char digit in "5522")
+        foreach (char digit in "55220")
         {
             Type(textBox, digit.ToString());
         }
 
-        Assert.Equal("55-22", source.Postcode);
-
-        Assert.True(Paste(textBox, "A"));
-        PressKey(textBox, Key.Back);
-
-        Assert.Equal("55-2", source.Postcode);
-        Assert.Equal(4, textBox.CaretIndex);
+        Assert.Equal("55-220", source.Postcode);
+        Assert.Equal(6, textBox.CaretIndex);
 
         // The binding survives the behavior's writes.
         source.Postcode = "invalid";

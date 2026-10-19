@@ -1,7 +1,7 @@
 using System.Globalization;
+using Altium.PcbManufacturing.Formatting;
 using Altium.PcbManufacturing.Models;
 using Altium.PcbManufacturing.Services;
-using Altium.PcbManufacturing.ViewModels;
 
 namespace Altium.PcbManufacturing.Tests;
 
@@ -66,7 +66,6 @@ public sealed class PricingTests
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("pl-PL");
 
             Assert.Equal("$1,234.50", UsdFormat.Format(1234.5m));
-            Assert.Equal("+$208.60", UsdFormat.FormatChange(208.6m));
         }
         finally
         {

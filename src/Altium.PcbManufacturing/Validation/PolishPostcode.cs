@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Altium.PcbManufacturing.Models;
+namespace Altium.PcbManufacturing.Validation;
 
 /// <summary>
 /// Postcode format rule for orders.

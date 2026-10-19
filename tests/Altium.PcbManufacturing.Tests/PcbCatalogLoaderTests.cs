@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json.Nodes;
+using Altium.PcbManufacturing.Exceptions;
 using Altium.PcbManufacturing.Models;
 using Altium.PcbManufacturing.Services;
 

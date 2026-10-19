@@ -1,7 +1,7 @@
 using System.Windows;
 using Altium.PcbManufacturing.ViewModels;
 
-namespace Altium.PcbManufacturing;
+namespace Altium.PcbManufacturing.Views;
 
 public partial class MainWindow : Window
 {

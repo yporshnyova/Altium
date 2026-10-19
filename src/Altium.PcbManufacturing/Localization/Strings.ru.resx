@@ -217,7 +217,7 @@
     <value>Включено</value>
   </data>
   <data name="Days_Format" xml:space="preserve">
-    <value>{0} дн.</value>
+    <value>{0} дней</value>
   </data>
   <data name="Thickness_Millimeters" xml:space="preserve">
     <value>{0:0.0#} мм</value>

@@ -1,23 +1,20 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using Altium.PcbManufacturing.Formatting;
 using Altium.PcbManufacturing.Localization;
 using Altium.PcbManufacturing.Models;
 using Altium.PcbManufacturing.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PolishPostcode = Altium.PcbManufacturing.Validation.PolishPostcode;
 
 namespace Altium.PcbManufacturing.ViewModels;
 
 /// <summary>
 /// Preferences tab: exposes the catalog options and edits the shared <see cref="ManufacturingPreferences"/>.
 /// </summary>
-/// <remarks>
-/// Holds no copy of the selections. Every editable property reads and writes the shared state, and changes made to
-/// the shared state from anywhere are re-raised here together with the values derived from them. Prices are derived
-/// on read through <see cref="PcbPricingService"/> and never stored. 
-/// </remarks>
-/// 
+
 public sealed partial class PreferencesViewModel : ObservableValidator
 {
     public const int ProjectNameMaxLength = 50;
@@ -202,7 +199,7 @@ public sealed partial class PreferencesViewModel : ObservableValidator
     public string EstimatedTotalPriceText => UsdFormat.Format(PriceEstimate.EstimatedTotalPrice);
 
     /// <summary>
-    /// The production time as localized text, e.g. <c>12 d</c> or <c>12 дн.</c>.
+    /// The production time as localized text, e.g. <c>12 days</c> or <c>12 дней</c>.
     /// </summary>
     public string EstimatedProductionTimeText => localizer.Format("Days_Format", SelectedMaterial.ProductionDays);
 

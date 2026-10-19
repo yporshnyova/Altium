@@ -120,7 +120,6 @@
                                 behaviors:PostcodeMaskBehavior.IsEnabled="True"
                                 AutomationProperties.HelpText="{Binding Text, ElementName=PostcodeHint}"
                                 AutomationProperties.LabeledBy="{Binding ElementName=PostcodeLabel}"
-                                MaxLength="{x:Static behaviors:PostcodeMask.MaxLength}"
                                 Style="{StaticResource FieldTextBoxStyle}"
                                 Text="{Binding Postcode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
                             <TextBlock

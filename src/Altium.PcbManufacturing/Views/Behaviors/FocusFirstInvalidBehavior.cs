@@ -1,7 +1,7 @@
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using WpfValidation = System.Windows.Controls.Validation;
 
 namespace Altium.PcbManufacturing.Views.Behaviors;
 
@@ -49,7 +49,7 @@ public static class FocusFirstInvalidBehavior
         for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
         {
             DependencyObject child = VisualTreeHelper.GetChild(parent, i);
-            if (child is FrameworkElement { Focusable: true, IsVisible: true } element && Validation.GetHasError(element))
+            if (child is FrameworkElement { Focusable: true, IsVisible: true } element && WpfValidation.GetHasError(element))
             {
                 return element;
             }

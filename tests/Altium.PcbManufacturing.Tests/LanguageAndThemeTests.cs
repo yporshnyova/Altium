@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.IO;
 using Altium.PcbManufacturing.Localization;
-using Altium.PcbManufacturing.Models;
 using Altium.PcbManufacturing.Settings;
 using Altium.PcbManufacturing.ViewModels;
 
@@ -79,7 +78,7 @@ public sealed class LanguageAndThemeTests : IDisposable
         screens.Localizer.SetLanguage(AppLanguage.Russian);
 
         Assert.Equal("2 шт.", screens.Preferences.QuantityText);
-        Assert.Equal("12 дн.", screens.Quote.EstimatedProductionTimeText);
+        Assert.Equal("12 дней", screens.Quote.EstimatedProductionTimeText);
         Assert.Equal("$745.00", screens.Quote.EstimatedTotalPriceText);
         Assert.Equal(["Размеры", "Слои", "Покрытие", "Параметры платы"], screens.Quote.ParameterGroups.Select(group => group.Title));
         // Numbers in texts follow the UI language.

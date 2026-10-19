@@ -106,7 +106,7 @@ namespace Altium.PcbManufacturing.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} pcs.
+        ///   Looks up a localized string similar to {0} pcs..
         /// </summary>
         public static string Boards_Format {
             get {
@@ -115,7 +115,7 @@ namespace Altium.PcbManufacturing.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} d.
+        ///   Looks up a localized string similar to {0} days.
         /// </summary>
         public static string Days_Format {
             get {

@@ -3,6 +3,7 @@ using Altium.PcbManufacturing.Models;
 using Altium.PcbManufacturing.Services;
 using Altium.PcbManufacturing.Settings;
 using Altium.PcbManufacturing.ViewModels;
+using Altium.PcbManufacturing.Views;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altium.PcbManufacturing;

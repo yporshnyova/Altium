@@ -1,4 +1,5 @@
 using Altium.PcbManufacturing.Models;
+using Altium.PcbManufacturing.Validation;
 
 namespace Altium.PcbManufacturing.Tests;
 

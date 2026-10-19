@@ -23,8 +23,9 @@ The assignment leaves these open; they are documented choices pending review:
   does not depend on the quantity.
 - **Project name**: defaults to `PCB-001`; required (not blank) and at most 50 characters, with no character restrictions.
 - **Notes**: optional, at most 300 characters; a line break typed in the field counts as two characters (CR LF).
-- **Postcode input**: the field accepts only digits and inserts the hyphen itself (`Views/Behaviors/PostcodeMask.cs`);
-  pasted text must be 5 digits or an `NN-NNN` fragment, otherwise it is rejected unchanged.
+- **Postcode input**: the field accepts only digits and inserts the hyphen itself
+  (`Views/Behaviors/PostcodeMaskBehavior.cs`); typed or pasted text must be digits, optionally with the hyphen in its
+  place (`55-220`), and at most 5 digits in total, otherwise it is rejected unchanged.
 - **Save & Continue**: validates every field and switches to the Quote tab; it keeps the preferences for the current
   session only (nothing is written to disk). On failure it stays on Preferences and focuses the first invalid field.
 - **Reset to Defaults**: restores `PCB-001`, an empty postcode and notes, and the first catalog entry of each option;
