@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets\Branding\pcb-manufacturing.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +17,11 @@
 
   <ItemGroup>
     <None Update="Data\pcb-catalog.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- The same icon as a WPF resource for the window title bar (MainWindow.Icon). -->
+  <ItemGroup>
+    <Resource Include="Assets\Branding\pcb-manufacturing.ico" />
   </ItemGroup>
 
   <!-- Strings.Designer.cs is the strongly typed accessor; Visual Studio regenerates it when Strings.resx is edited. -->

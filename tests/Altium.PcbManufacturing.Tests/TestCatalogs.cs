@@ -19,15 +19,14 @@ internal static class TestCatalogs
             { "id": "1.6mm", "millimeters": 1.6 },
             { "id": "0.8mm", "millimeters": 0.8 }
           ],
-          "parameterGroups": [
-            {
-              "name": "Dimensions",
-              "parameters": [
-                { "name": "Width", "value": "100 mm" },
-                { "name": "Height", "value": "80 mm" }
-              ]
-            }
-          ]
+          "boardSpecification": {
+            "widthMm": 120,
+            "heightMm": 60,
+            "layerCount": 4,
+            "copperWeightOz": 2,
+            "surfaceFinish": { "id": "enig", "name": "ENIG" },
+            "silkscreenColor": { "id": "white", "name": "White" }
+          }
         }
         """;
 
@@ -48,8 +47,11 @@ internal static class TestCatalogs
             new BoardThickness("1.6mm", 1.6m),
             new BoardThickness("0.8mm", 0.8m),
         ],
-        ParameterGroups:
-        [
-            new ManufacturingParameterGroup("Dimensions", [new ManufacturingParameter("Width", "100 mm")]),
-        ]);
+        BoardSpecification: new BoardSpecification(
+            WidthMm: 120m,
+            HeightMm: 60m,
+            LayerCount: 4,
+            CopperWeightOz: 2m,
+            SurfaceFinish: new CatalogOption("enig", "ENIG"),
+            SilkscreenColor: new CatalogOption("white", "White")));
 }

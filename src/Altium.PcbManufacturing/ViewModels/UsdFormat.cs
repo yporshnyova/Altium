@@ -13,4 +13,10 @@ public static class UsdFormat
 
     /// <summary>Formats a price change as <c>+$52.15</c>, <c>-$5.00</c> or <c>$0.00</c>.</summary>
     public static string FormatChange(decimal amount) => amount > 0 ? "+" + Format(amount) : Format(amount);
+
+    /// <summary>
+    /// Formats a material surcharge: <paramref name="includedText"/> (e.g. a localized "Included") when it is zero,
+    /// otherwise the change, e.g. <c>+$52.15</c>.
+    /// </summary>
+    public static string FormatSurcharge(decimal amount, string includedText) => amount == 0 ? includedText : FormatChange(amount);
 }

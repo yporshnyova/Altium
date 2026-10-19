@@ -1,8 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Russian user interface strings. Product identifiers (FR-4, Rogers RO4350B), currency and the postcode pattern stay as is.
--->
 <root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
@@ -15,74 +117,250 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-
-  <!-- Application shell -->
-  <data name="App_Title" xml:space="preserve"><value>Производство печатных плат</value></data>
-  <data name="Header_Language" xml:space="preserve"><value>Язык</value></data>
-  <data name="Header_SwitchToDarkTheme" xml:space="preserve"><value>Включить тёмную тему</value></data>
-  <data name="Header_SwitchToLightTheme" xml:space="preserve"><value>Включить светлую тему</value></data>
-  <data name="Tab_Preferences" xml:space="preserve"><value>Параметры</value></data>
-  <data name="Tab_Quote" xml:space="preserve"><value>Расчёт</value></data>
-  <data name="Tab_Order" xml:space="preserve"><value>Заказ</value></data>
-  <data name="Placeholder_Quote" xml:space="preserve"><value>Вкладка «Расчёт» появится на следующем этапе.</value></data>
-  <data name="Placeholder_Order" xml:space="preserve"><value>Вкладка «Заказ» появится на следующем этапе.</value></data>
-
-  <!-- Workflow steps -->
-  <data name="Workflow_StepLocked" xml:space="preserve"><value>Завершите предыдущий этап, чтобы продолжить.</value></data>
-  <data name="Workflow_StepCompleted" xml:space="preserve"><value>Этап завершён</value></data>
-
-  <!-- Preferences form -->
-  <data name="Preferences_ProjectBasics" xml:space="preserve"><value>Основные сведения</value></data>
-  <data name="Preferences_ProjectName" xml:space="preserve"><value>Название проекта</value></data>
-  <data name="Preferences_Postcode" xml:space="preserve"><value>Почтовый индекс</value></data>
-  <data name="Preferences_PostcodeHint" xml:space="preserve"><value>Польский формат NN-NNN, например 55-220.</value></data>
-  <data name="Preferences_BoardPreferences" xml:space="preserve"><value>Параметры платы</value></data>
-  <data name="Preferences_Material" xml:space="preserve"><value>Материал</value></data>
-  <data name="Preferences_SolderMaskColor" xml:space="preserve"><value>Цвет паяльной маски</value></data>
-  <data name="Preferences_BoardThickness" xml:space="preserve"><value>Толщина платы</value></data>
-  <data name="Preferences_ProductionTimeHint" xml:space="preserve"><value>Ориентировочный срок изготовления: {0}</value></data>
-  <data name="Preferences_AdditionalDetails" xml:space="preserve"><value>Дополнительно</value></data>
-  <data name="Preferences_Notes" xml:space="preserve"><value>Примечания</value></data>
-
-  <!-- Summary -->
-  <data name="Summary_Title" xml:space="preserve"><value>Сводка</value></data>
-  <data name="Summary_Project" xml:space="preserve"><value>Проект</value></data>
-  <data name="Summary_ProjectName" xml:space="preserve"><value>Название</value></data>
-  <data name="Summary_Postcode" xml:space="preserve"><value>Почтовый индекс</value></data>
-  <data name="Summary_NotEntered" xml:space="preserve"><value>Не указано</value></data>
-  <data name="Summary_InvalidValue" xml:space="preserve"><value>{0} (неверно)</value></data>
-  <data name="Summary_Board" xml:space="preserve"><value>Плата</value></data>
-  <data name="Summary_Material" xml:space="preserve"><value>Материал</value></data>
-  <data name="Summary_SolderMask" xml:space="preserve"><value>Паяльная маска</value></data>
-  <data name="Summary_BoardThickness" xml:space="preserve"><value>Толщина платы</value></data>
-  <data name="Summary_PricingAndProduction" xml:space="preserve"><value>Стоимость и сроки</value></data>
-  <data name="Summary_BasePrice" xml:space="preserve"><value>Базовая цена</value></data>
-  <data name="Summary_MaterialSurcharge" xml:space="preserve"><value>Надбавка за материал</value></data>
-  <data name="Summary_EstimatedPrice" xml:space="preserve"><value>Ориентировочная цена</value></data>
-  <data name="Summary_EstimatedProductionTime" xml:space="preserve"><value>Срок изготовления</value></data>
-  <data name="Summary_Disclaimer" xml:space="preserve"><value>Цены указаны в долларах США. Это предварительная оценка, а не окончательное предложение.</value></data>
-
-  <!-- Values -->
-  <data name="Pricing_Included" xml:space="preserve"><value>Включено</value></data>
-  <data name="Days_One" xml:space="preserve"><value>{0} день</value></data>
-  <data name="Days_Few" xml:space="preserve"><value>{0} дня</value></data>
-  <data name="Days_Many" xml:space="preserve"><value>{0} дней</value></data>
-  <data name="Thickness_Millimeters" xml:space="preserve"><value>{0:0.0#} мм</value></data>
-  <data name="SolderMaskColor_green" xml:space="preserve"><value>Зелёный</value></data>
-  <data name="SolderMaskColor_black" xml:space="preserve"><value>Чёрный</value></data>
-  <data name="SolderMaskColor_blue" xml:space="preserve"><value>Синий</value></data>
-
-  <!-- Actions and dialogs -->
-  <data name="Actions_ResetToDefaults" xml:space="preserve"><value>Сбросить</value></data>
-  <data name="Actions_SaveAndContinue" xml:space="preserve"><value>Сохранить и продолжить</value></data>
-  <data name="Reset_ConfirmTitle" xml:space="preserve"><value>Сброс параметров</value></data>
-  <data name="Reset_ConfirmMessage" xml:space="preserve"><value>Отменить изменения и восстановить параметры по умолчанию?</value></data>
-  <data name="Dialog_Yes" xml:space="preserve"><value>Да</value></data>
-  <data name="Dialog_No" xml:space="preserve"><value>Нет</value></data>
-
-  <!-- Validation: DataAnnotations format these with {0} = property name and {1} = the length limit. -->
-  <data name="Validation_ProjectNameRequired" xml:space="preserve"><value>Введите название проекта.</value></data>
-  <data name="Validation_PostcodeRequired" xml:space="preserve"><value>Введите почтовый индекс.</value></data>
-  <data name="Validation_PostcodeFormat" xml:space="preserve"><value>Используйте формат NN-NNN.</value></data>
-  <data name="Validation_MaxLength" xml:space="preserve"><value>Не более {1} символов.</value></data>
+  <data name="App_Title" xml:space="preserve">
+    <value>Производство печатных плат</value>
+  </data>
+  <data name="Header_Language" xml:space="preserve">
+    <value>Язык</value>
+  </data>
+  <data name="Header_SwitchToDarkTheme" xml:space="preserve">
+    <value>Включить тёмную тему</value>
+  </data>
+  <data name="Header_SwitchToLightTheme" xml:space="preserve">
+    <value>Включить светлую тему</value>
+  </data>
+  <data name="Tab_Preferences" xml:space="preserve">
+    <value>Параметры</value>
+  </data>
+  <data name="Tab_Quote" xml:space="preserve">
+    <value>Расчёт</value>
+  </data>
+  <data name="Tab_Order" xml:space="preserve">
+    <value>Заказ</value>
+  </data>
+  <data name="Placeholder_Order" xml:space="preserve">
+    <value>Вкладка «Заказ» появится на следующем этапе.</value>
+  </data>
+  <data name="Preferences_ProjectBasics" xml:space="preserve">
+    <value>Основные сведения</value>
+  </data>
+  <data name="Preferences_ProjectName" xml:space="preserve">
+    <value>Название проекта</value>
+  </data>
+  <data name="Preferences_Postcode" xml:space="preserve">
+    <value>Почтовый индекс</value>
+  </data>
+  <data name="Preferences_PostcodeHint" xml:space="preserve">
+    <value>Польский формат NN-NNN, например 55-220.</value>
+  </data>
+  <data name="Preferences_BoardPreferences" xml:space="preserve">
+    <value>Параметры платы</value>
+  </data>
+  <data name="Preferences_Material" xml:space="preserve">
+    <value>Материал</value>
+  </data>
+  <data name="Preferences_SolderMaskColor" xml:space="preserve">
+    <value>Цвет паяльной маски</value>
+  </data>
+  <data name="Preferences_BoardThickness" xml:space="preserve">
+    <value>Толщина платы</value>
+  </data>
+  <data name="Preferences_ProductionTimeHint" xml:space="preserve">
+    <value>Ориентировочный срок изготовления: {0}</value>
+  </data>
+  <data name="Preferences_AdditionalDetails" xml:space="preserve">
+    <value>Дополнительно</value>
+  </data>
+  <data name="Preferences_Notes" xml:space="preserve">
+    <value>Примечания</value>
+  </data>
+  <data name="Summary_Title" xml:space="preserve">
+    <value>Сводка</value>
+  </data>
+  <data name="Summary_Project" xml:space="preserve">
+    <value>Проект</value>
+  </data>
+  <data name="Summary_ProjectName" xml:space="preserve">
+    <value>Название</value>
+  </data>
+  <data name="Summary_Postcode" xml:space="preserve">
+    <value>Почтовый индекс</value>
+  </data>
+  <data name="Summary_NotEntered" xml:space="preserve">
+    <value>Не указано</value>
+  </data>
+  <data name="Summary_InvalidValue" xml:space="preserve">
+    <value>{0} (неверно)</value>
+  </data>
+  <data name="Summary_Board" xml:space="preserve">
+    <value>Плата</value>
+  </data>
+  <data name="Summary_Material" xml:space="preserve">
+    <value>Материал</value>
+  </data>
+  <data name="Summary_SolderMask" xml:space="preserve">
+    <value>Паяльная маска</value>
+  </data>
+  <data name="Summary_BoardThickness" xml:space="preserve">
+    <value>Толщина платы</value>
+  </data>
+  <data name="Summary_PricingAndProduction" xml:space="preserve">
+    <value>Стоимость и сроки</value>
+  </data>
+  <data name="Summary_EstimatedProductionTime" xml:space="preserve">
+    <value>Срок изготовления</value>
+  </data>
+  <data name="Summary_Disclaimer" xml:space="preserve">
+    <value>Цены указаны в долларах США. Это предварительная оценка, а не окончательное предложение.</value>
+  </data>
+  <data name="Pricing_Included" xml:space="preserve">
+    <value>Включено</value>
+  </data>
+  <data name="Days_Format" xml:space="preserve">
+    <value>{0} дн.</value>
+  </data>
+  <data name="Thickness_Millimeters" xml:space="preserve">
+    <value>{0:0.0#} мм</value>
+  </data>
+  <data name="SolderMaskColor_green" xml:space="preserve">
+    <value>Зелёный</value>
+  </data>
+  <data name="SolderMaskColor_black" xml:space="preserve">
+    <value>Чёрный</value>
+  </data>
+  <data name="SolderMaskColor_blue" xml:space="preserve">
+    <value>Синий</value>
+  </data>
+  <data name="Actions_ResetToDefaults" xml:space="preserve">
+    <value>Сбросить</value>
+  </data>
+  <data name="Actions_SaveAndContinue" xml:space="preserve">
+    <value>Сохранить и продолжить</value>
+  </data>
+  <data name="Reset_ConfirmTitle" xml:space="preserve">
+    <value>Сброс параметров</value>
+  </data>
+  <data name="Reset_ConfirmMessage" xml:space="preserve">
+    <value>Отменить изменения и восстановить параметры по умолчанию?</value>
+  </data>
+  <data name="Dialog_Yes" xml:space="preserve">
+    <value>Да</value>
+  </data>
+  <data name="Dialog_No" xml:space="preserve">
+    <value>Нет</value>
+  </data>
+  <data name="Validation_ProjectNameRequired" xml:space="preserve">
+    <value>Введите название проекта.</value>
+  </data>
+  <data name="Validation_PostcodeRequired" xml:space="preserve">
+    <value>Введите почтовый индекс.</value>
+  </data>
+  <data name="Validation_PostcodeFormat" xml:space="preserve">
+    <value>Используйте формат NN-NNN.</value>
+  </data>
+  <data name="Validation_MaxLength" xml:space="preserve">
+    <value>Не более {1} символов.</value>
+  </data>
+  <data name="Workflow_StepLocked" xml:space="preserve">
+    <value>Завершите предыдущий этап, чтобы продолжить.</value>
+  </data>
+  <data name="Workflow_StepCompleted" xml:space="preserve">
+    <value>Этап завершён</value>
+  </data>
+  <data name="Quote_BoardSpecifications" xml:space="preserve">
+    <value>Характеристики платы</value>
+  </data>
+  <data name="Quote_Dimensions" xml:space="preserve">
+    <value>Размеры</value>
+  </data>
+  <data name="Quote_Size" xml:space="preserve">
+    <value>Размер</value>
+  </data>
+  <data name="Quote_SizeValue" xml:space="preserve">
+    <value>{0:0.#} × {1:0.#} мм</value>
+  </data>
+  <data name="Quote_Quantity" xml:space="preserve">
+    <value>Количество</value>
+  </data>
+  <data name="Quote_Layers" xml:space="preserve">
+    <value>Слои</value>
+  </data>
+  <data name="Quote_LayerCount" xml:space="preserve">
+    <value>Слои меди</value>
+  </data>
+  <data name="Layers_Format" xml:space="preserve">
+    <value>{0} слоя</value>
+  </data>
+  <data name="Quote_CopperWeight" xml:space="preserve">
+    <value>Толщина меди</value>
+  </data>
+  <data name="Quote_CopperWeightValue" xml:space="preserve">
+    <value>{0:0.##} унц.</value>
+  </data>
+  <data name="Quote_Finish" xml:space="preserve">
+    <value>Покрытие</value>
+  </data>
+  <data name="Quote_SurfaceFinish" xml:space="preserve">
+    <value>Финишное покрытие</value>
+  </data>
+  <data name="Quote_Silkscreen" xml:space="preserve">
+    <value>Цвет маркировки</value>
+  </data>
+  <data name="SurfaceFinish_hasl_lead_free" xml:space="preserve">
+    <value>HASL (бессвинцовый)</value>
+  </data>
+  <data name="SilkscreenColor_white" xml:space="preserve">
+    <value>Белый</value>
+  </data>
+  <data name="Quote_PriceEstimate" xml:space="preserve">
+    <value>Расчёт стоимости</value>
+  </data>
+  <data name="Quote_Preview" xml:space="preserve">
+    <value>Предпросмотр платы</value>
+  </data>
+  <data name="Quote_PreviewNote" xml:space="preserve">
+    <value>Схематичная иллюстрация выбранной платы, а не производственная топология или структура слоёв.</value>
+  </data>
+  <data name="Actions_BackToPreferences" xml:space="preserve">
+    <value>Назад к параметрам</value>
+  </data>
+  <data name="Actions_ContinueToOrder" xml:space="preserve">
+    <value>Перейти к заказу</value>
+  </data>
+  <data name="Preferences_Quantity" xml:space="preserve">
+    <value>Количество</value>
+  </data>
+  <data name="Summary_Quantity" xml:space="preserve">
+    <value>Количество</value>
+  </data>
+  <data name="Summary_BaseUnitPrice" xml:space="preserve">
+    <value>Базовая цена за плату</value>
+  </data>
+  <data name="Summary_MaterialSurchargePerUnit" xml:space="preserve">
+    <value>Надбавка за материал на плату</value>
+  </data>
+  <data name="Summary_EstimatedUnitPrice" xml:space="preserve">
+    <value>Ориентировочная цена за плату</value>
+  </data>
+  <data name="Summary_EstimatedTotal" xml:space="preserve">
+    <value>Ориентировочная сумма</value>
+  </data>
+  <data name="Validation_QuantityRequired" xml:space="preserve">
+    <value>Введите количество плат.</value>
+  </data>
+  <data name="Validation_QuantityWholeNumber" xml:space="preserve">
+    <value>Введите целое число плат, не меньше 1.</value>
+  </data>
+  <data name="Validation_QuantityTooLarge" xml:space="preserve">
+    <value>Слишком большое количество.</value>
+  </data>
+  <data name="Quote_TopView" xml:space="preserve">
+    <value>Вид сверху</value>
+  </data>
+  <data name="Quote_SideView" xml:space="preserve">
+    <value>Вид сбоку</value>
+  </data>
+  <data name="Boards_Format" xml:space="preserve">
+    <value>{0} шт.</value>
+  </data>
 </root>

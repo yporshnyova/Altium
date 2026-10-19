@@ -1,0 +1,65 @@
+﻿<UserControl
+    x:Class="Altium.PcbManufacturing.Views.PcbPreviewView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:Altium.PcbManufacturing.Views.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Altium.PcbManufacturing.ViewModels"
+    d:DataContext="{d:DesignInstance Type=vm:QuoteViewModel}"
+    d:DesignHeight="300"
+    d:DesignWidth="400"
+    mc:Ignorable="d">
+    <!--
+        Illustrative top view in native WPF vectors; not a fabrication layout. The board canvas is sized in millimetres
+        and its layers are frozen geometries from PcbArtworkBuilder. The Viewbox scales the canvas uniformly into the
+        available space, so any board size keeps its aspect ratio, is centred and never clips. Only the solder mask
+        fill comes from the user's selection.
+    -->
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="PadBrush" Color="#C9CED6" />
+        <SolidColorBrush x:Key="SilkscreenBrush" Color="#F2F4F7" />
+        <SolidColorBrush
+            x:Key="TraceBrush"
+            Opacity="0.3"
+            Color="#FFFFFF" />
+    </UserControl.Resources>
+
+    <Viewbox Stretch="Uniform" StretchDirection="Both">
+        <Canvas
+            x:Name="Board"
+            Width="{Binding Specification.WidthMm, Mode=OneTime}"
+            Height="{Binding Specification.HeightMm, Mode=OneTime}"
+            Tag="{Binding Specification, Mode=OneTime, Converter={converters:PcbArtworkConverter}}">
+            <!--  Outline filled with the solder mask colour; the thin edge keeps dark masks visible.  -->
+            <Path
+                x:Name="Outline"
+                Data="{Binding Tag.Outline, ElementName=Board}"
+                Fill="{Binding SolderMaskHexColor, Mode=OneWay}"
+                Stroke="{DynamicResource SwatchBorderBrush}"
+                StrokeThickness="0.6" />
+            <!--  Copper traces under the mask  -->
+            <Path
+                x:Name="Traces"
+                Data="{Binding Tag.Traces, ElementName=Board}"
+                Fill="{StaticResource TraceBrush}" />
+            <!--  Exposed pads (HASL finish): IC, passives, connector header and vias  -->
+            <Path
+                x:Name="Pads"
+                Data="{Binding Tag.Pads, ElementName=Board}"
+                Fill="{StaticResource PadBrush}" />
+            <!--  Silkscreen: component outlines and the pin-1 marker  -->
+            <Path
+                x:Name="Silkscreen"
+                Data="{Binding Tag.Silkscreen, ElementName=Board}"
+                Fill="{StaticResource SilkscreenBrush}" />
+            <!--  Mounting holes: drilled through, so they show the surface behind the board  -->
+            <Path
+                x:Name="MountingHoles"
+                Data="{Binding Tag.MountingHoles, ElementName=Board}"
+                Fill="{DynamicResource CardBackgroundBrush}"
+                Stroke="{StaticResource PadBrush}"
+                StrokeThickness="0.8" />
+        </Canvas>
+    </Viewbox>
+</UserControl>

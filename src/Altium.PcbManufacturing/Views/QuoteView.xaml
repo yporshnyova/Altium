@@ -1,0 +1,321 @@
+﻿<UserControl
+    x:Class="Altium.PcbManufacturing.Views.QuoteView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:Altium.PcbManufacturing.Views.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:loc="clr-namespace:Altium.PcbManufacturing.Views.Markup"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="clr-namespace:Altium.PcbManufacturing.Models"
+    xmlns:views="clr-namespace:Altium.PcbManufacturing.Views"
+    xmlns:vm="clr-namespace:Altium.PcbManufacturing.ViewModels"
+    d:DataContext="{d:DesignInstance Type=vm:QuoteViewModel}"
+    d:DesignHeight="640"
+    d:DesignWidth="960"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <DataTemplate x:Key="SolderMaskColorTemplate" DataType="{x:Type models:SolderMaskColor}">
+            <StackPanel Orientation="Horizontal">
+                <Border Background="{Binding HexColor, Mode=OneWay}" Style="{StaticResource ColorSwatchStyle}" />
+                <TextBlock VerticalAlignment="Center" Text="{loc:CatalogName SolderMaskColor}" />
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <!--  Scrolling content above a footer that stays visible, as on Preferences.  -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ScrollViewer
+            Grid.Row="0"
+            Focusable="False"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <Grid Margin="{StaticResource PageMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*" MinWidth="400" />
+                    <ColumnDefinition Width="{StaticResource ColumnGap}" />
+                    <ColumnDefinition Width="2*" MinWidth="300" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <!--
+                        Board specifications: a grouped, read-only parameter table. Groups and rows come from
+                        QuoteViewModel.ParameterGroups; the shared size scope aligns the label column across groups.
+                    -->
+                    <Border Margin="{StaticResource CardGapMargin}" Style="{StaticResource CardStyle}">
+                        <StackPanel Grid.IsSharedSizeScope="True">
+                            <TextBlock Style="{StaticResource SectionHeaderTextStyle}" Text="{loc:Text Quote_BoardSpecifications}" />
+                            <ItemsControl
+                                x:Name="ParameterTable"
+                                Focusable="False"
+                                ItemsSource="{Binding ParameterGroups, Mode=OneTime}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:QuoteParameterGroup}">
+                                        <StackPanel>
+                                            <!--  Divider above every group except the first.  -->
+                                            <Border x:Name="GroupDivider" Style="{StaticResource DividerStyle}" />
+                                            <TextBlock Style="{StaticResource SummarySectionTextStyle}" Text="{Binding Title, Mode=OneWay}" />
+                                            <ItemsControl Focusable="False" ItemsSource="{Binding Parameters, Mode=OneTime}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type vm:QuoteParameter}">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition
+                                                                    Width="Auto"
+                                                                    MinWidth="160"
+                                                                    SharedSizeGroup="ParameterLabel" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Style="{StaticResource SummaryLabelTextStyle}" Text="{Binding Label, Mode=OneWay}" />
+                                                            <StackPanel
+                                                                Grid.Column="1"
+                                                                Margin="0,0,0,10"
+                                                                Orientation="Horizontal">
+                                                                <Border
+                                                                    x:Name="Swatch"
+                                                                    Background="{Binding SwatchHexColor, Mode=OneWay}"
+                                                                    Style="{StaticResource ColorSwatchStyle}"
+                                                                    Visibility="Collapsed" />
+                                                                <TextBlock
+                                                                    Margin="0"
+                                                                    VerticalAlignment="Center"
+                                                                    Style="{StaticResource SummaryValueTextStyle}"
+                                                                    Text="{Binding Value, Mode=OneWay}" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                        <DataTemplate.Triggers>
+                                                            <DataTrigger Binding="{Binding HasSwatch, Mode=OneTime}" Value="True">
+                                                                <Setter TargetName="Swatch" Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </DataTemplate.Triggers>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                                                <Setter TargetName="GroupDivider" Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!--  Price estimate, from the shared pricing service  -->
+                    <Border Style="{StaticResource CardStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" MinWidth="160" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock
+                                Grid.Row="0"
+                                Grid.ColumnSpan="2"
+                                Style="{StaticResource SectionHeaderTextStyle}"
+                                Text="{loc:Text Quote_PriceEstimate}" />
+                            <TextBlock
+                                Grid.Row="1"
+                                Style="{StaticResource SummaryLabelTextStyle}"
+                                Text="{loc:Text Summary_BaseUnitPrice}" />
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Style="{StaticResource SummaryValueTextStyle}"
+                                Text="{Binding BaseUnitPriceText, Mode=OneWay}" />
+                            <TextBlock
+                                Grid.Row="2"
+                                Style="{StaticResource SummaryLabelTextStyle}"
+                                Text="{loc:Text Summary_MaterialSurchargePerUnit}" />
+                            <TextBlock
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                Style="{StaticResource SummaryValueTextStyle}"
+                                Text="{Binding MaterialSurchargePerUnitText, Mode=OneWay}" />
+                            <TextBlock
+                                Grid.Row="3"
+                                Style="{StaticResource SummaryLabelTextStyle}"
+                                Text="{loc:Text Summary_EstimatedUnitPrice}" />
+                            <TextBlock
+                                Grid.Row="3"
+                                Grid.Column="1"
+                                Style="{StaticResource SummaryValueTextStyle}">
+                                <Run Text="{Binding EstimatedUnitPriceText, Mode=OneWay}" />
+                                <Run Text=" × " />
+                                <Run Text="{Binding QuantityText, Mode=OneWay}" />
+                            </TextBlock>
+                            <Border
+                                Grid.Row="4"
+                                Grid.ColumnSpan="2"
+                                Style="{StaticResource DividerStyle}" />
+                            <TextBlock
+                                Grid.Row="5"
+                                Style="{StaticResource SummaryTotalLabelTextStyle}"
+                                Text="{loc:Text Summary_EstimatedTotal}" />
+                            <TextBlock
+                                Grid.Row="5"
+                                Grid.Column="1"
+                                Style="{StaticResource SummaryTotalValueTextStyle}"
+                                Text="{Binding EstimatedTotalPriceText, Mode=OneWay}" />
+                            <TextBlock
+                                Grid.Row="6"
+                                Style="{StaticResource SummaryLabelTextStyle}"
+                                Text="{loc:Text Summary_EstimatedProductionTime}" />
+                            <TextBlock
+                                Grid.Row="6"
+                                Grid.Column="1"
+                                Style="{StaticResource SummaryValueTextStyle}"
+                                Text="{Binding EstimatedProductionTimeText, Mode=OneWay}" />
+                            <Grid
+                                Grid.Row="7"
+                                Grid.ColumnSpan="2"
+                                Margin="0,4,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <iconPacks:PackIconMaterial
+                                    Width="14"
+                                    Height="14"
+                                    Margin="0,1,6,0"
+                                    VerticalAlignment="Top"
+                                    Foreground="{DynamicResource TextSecondaryBrush}"
+                                    Kind="InformationOutline" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Margin="0,0,0,14"
+                                    Style="{StaticResource HintTextStyle}"
+                                    Text="{loc:Text Summary_Disclaimer}" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!--  Board preview: top view and schematic side view  -->
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionHeaderTextStyle}" Text="{loc:Text Quote_Preview}" />
+
+                        <TextBlock Style="{StaticResource SummarySectionTextStyle}" Text="{loc:Text Quote_TopView}" />
+                        <views:PcbPreviewView
+                            x:Name="Preview"
+                            MaxHeight="300"
+                            Margin="8,4,8,12"
+                            AutomationProperties.Name="{loc:Text Quote_TopView}" />
+                        <TextBlock HorizontalAlignment="Center" Style="{StaticResource SummaryValueTextStyle}">
+                            <Run Text="{Binding BoardSizeText, Mode=OneWay}" />
+                            <Run Text=" · " />
+                            <Run Text="{Binding LayerCountText, Mode=OneWay}" />
+                        </TextBlock>
+
+                        <Border Style="{StaticResource DividerStyle}" />
+                        <TextBlock Style="{StaticResource SummarySectionTextStyle}" Text="{loc:Text Quote_SideView}" />
+                        <views:PcbSideView
+                            x:Name="SideView"
+                            Margin="0,0,0,12"
+                            AutomationProperties.Name="{loc:Text Quote_SideView}" />
+
+                        <!--  Legend: what the side view's colours stand for.  -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" MinWidth="110" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock
+                                Grid.Row="0"
+                                Style="{StaticResource SummaryLabelTextStyle}"
+                                Text="{loc:Text Summary_Material}" />
+                            <StackPanel
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Margin="0,0,0,10"
+                                Orientation="Horizontal">
+                                <Border Background="{Binding SelectedMaterial, Mode=OneWay, Converter={converters:SubstrateBrushConverter}}" Style="{StaticResource ColorSwatchStyle}" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding SelectedMaterial.Name, Mode=OneWay}" />
+                            </StackPanel>
+                            <TextBlock
+                                Grid.Row="1"
+                                Style="{StaticResource SummaryLabelTextStyle}"
+                                Text="{loc:Text Summary_SolderMask}" />
+                            <ContentPresenter
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Margin="0,0,0,10"
+                                Content="{Binding SelectedSolderMaskColor, Mode=OneWay}"
+                                ContentTemplate="{StaticResource SolderMaskColorTemplate}"
+                                TextElement.FontWeight="SemiBold" />
+                        </Grid>
+
+                        <TextBlock
+                            Margin="0,0,0,14"
+                            HorizontalAlignment="Center"
+                            Style="{StaticResource HintTextStyle}"
+                            Text="{loc:Text Quote_PreviewNote}"
+                            TextAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+
+        <Border Grid.Row="1" Style="{StaticResource FooterBarStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button
+                    Grid.Column="0"
+                    AutomationProperties.Name="{loc:Text Actions_BackToPreferences}"
+                    Command="{Binding BackToPreferencesCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial
+                            Margin="0,0,8,0"
+                            Kind="ArrowLeft"
+                            Style="{StaticResource ButtonIconStyle}" />
+                        <TextBlock VerticalAlignment="Center" Text="{loc:Text Actions_BackToPreferences}" />
+                    </StackPanel>
+                </Button>
+                <Button
+                    Grid.Column="2"
+                    AutomationProperties.Name="{loc:Text Actions_ContinueToOrder}"
+                    Command="{Binding ContinueToOrderCommand}"
+                    Style="{StaticResource PrimaryButtonStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" Text="{loc:Text Actions_ContinueToOrder}" />
+                        <iconPacks:PackIconMaterial
+                            Margin="8,0,0,0"
+                            Kind="ArrowRight"
+                            Style="{StaticResource ButtonIconStyle}" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

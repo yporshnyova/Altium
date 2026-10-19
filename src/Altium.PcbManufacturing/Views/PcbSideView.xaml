@@ -1,0 +1,80 @@
+<UserControl
+    x:Class="Altium.PcbManufacturing.Views.PcbSideView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:Altium.PcbManufacturing.Views.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:loc="clr-namespace:Altium.PcbManufacturing.Views.Markup"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:vm="clr-namespace:Altium.PcbManufacturing.ViewModels"
+    d:DataContext="{d:DesignInstance Type=vm:QuoteViewModel}"
+    d:DesignHeight="40"
+    d:DesignWidth="400"
+    mc:Ignorable="d">
+    <!--
+        Schematic board profile: solder mask, core, solder mask. Not a fabrication stack-up. The profile height is the
+        selected thickness relative to the thickest catalog option, so thicker boards are visibly thicker and the
+        thickest one exactly fills the reserved band; the band itself never changes height, so the layout is stable.
+        The core colour comes from the material, the mask colour from the selected solder mask.
+    -->
+    <UserControl.Resources>
+        <!--  Profile height of the thickest catalog board, in device-independent pixels.  -->
+        <sys:Double x:Key="MaxProfileHeight">24</sys:Double>
+        <GridLength x:Key="MaskLayerHeight">2</GridLength>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <!--  Reserved band, as high as the thickest profile.  -->
+        <Grid Height="{StaticResource MaxProfileHeight}">
+            <Grid
+                x:Name="Profile"
+                MinHeight="6"
+                VerticalAlignment="Center"
+                Height="{Binding RelativeBoardThickness, Mode=OneWay, Converter={converters:ScaleConverter}, ConverterParameter={StaticResource MaxProfileHeight}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="{StaticResource MaskLayerHeight}" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="{StaticResource MaskLayerHeight}" />
+                </Grid.RowDefinitions>
+                <Border Grid.Row="0" Background="{Binding SolderMaskHexColor, Mode=OneWay}" />
+                <Border
+                    x:Name="Core"
+                    Grid.Row="1"
+                    Background="{Binding SelectedMaterial, Mode=OneWay, Converter={converters:SubstrateBrushConverter}}" />
+                <Border Grid.Row="2" Background="{Binding SolderMaskHexColor, Mode=OneWay}" />
+                <!--  Thin edge keeps dark masks and light cores visible on either theme.  -->
+                <Border
+                    Grid.RowSpan="3"
+                    BorderBrush="{DynamicResource SwatchBorderBrush}"
+                    BorderThickness="0.75" />
+            </Grid>
+        </Grid>
+
+        <!--  Dimension bracket spanning the profile, then the exact thickness.  -->
+        <Path
+            Grid.Column="1"
+            Width="7"
+            Height="{Binding ActualHeight, ElementName=Profile}"
+            Margin="8,0,6,0"
+            VerticalAlignment="Center"
+            Data="M0,0 H6 M3,0 V10 M0,10 H6"
+            Stretch="Fill"
+            Stroke="{DynamicResource TextSecondaryBrush}"
+            StrokeThickness="1" />
+        <TextBlock
+            x:Name="ThicknessLabel"
+            Grid.Column="2"
+            MinWidth="48"
+            VerticalAlignment="Center"
+            FontWeight="SemiBold"
+            Foreground="{DynamicResource TextPrimaryBrush}"
+            Text="{loc:Format Thickness_Millimeters, Path=SelectedBoardThickness.Millimeters}" />
+    </Grid>
+</UserControl>

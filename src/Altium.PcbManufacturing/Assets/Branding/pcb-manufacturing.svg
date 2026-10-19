@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>PCB Manufacturing - application icon (Circuit Core)</title>
+ 
+  <!-- Tile -->
+  <rect width="256" height="256" rx="56" fill="#0B1628"/>
+
+  <!-- Traces: two per side, symmetric -->
+  <g fill="none" stroke="#14B8A6" stroke-width="18" stroke-linecap="round">
+    <path d="M106 74 V54 M150 74 V54"/>
+    <path d="M106 182 V202 M150 182 V202"/>
+    <path d="M74 106 H54 M74 150 H54"/>
+    <path d="M182 106 H202 M182 150 H202"/>
+  </g>
+
+  <!-- Connection pads -->
+  <g fill="#22D3EE">
+    <circle cx="106" cy="44" r="14"/>
+    <circle cx="150" cy="44" r="14"/>
+    <circle cx="106" cy="212" r="14"/>
+    <circle cx="150" cy="212" r="14"/>
+    <circle cx="44" cy="106" r="14"/>
+    <circle cx="44" cy="150" r="14"/>
+    <circle cx="212" cy="106" r="14"/>
+    <circle cx="212" cy="150" r="14"/>
+  </g>
+
+  <!-- Chip package and die -->
+  <rect x="74" y="74" width="108" height="108" rx="20" fill="#0B1628" stroke="#22D3EE" stroke-width="18"/>
+  <rect x="106" y="106" width="44" height="44" rx="9" fill="#14B8A6"/>
+</svg>

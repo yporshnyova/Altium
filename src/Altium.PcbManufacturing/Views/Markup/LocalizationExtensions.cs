@@ -79,7 +79,7 @@ public sealed class FormatExtension : MarkupExtension
 }
 
 /// <summary>
-/// The localized name of a catalog entry, looked up as <c>{Prefix}_{id}</c> with the catalog name as fallback, so an
+/// The localized name of a catalog entry, looked up by <see cref="Localizer.CatalogKey"/> with the catalog name as fallback, so an
 /// entry added to the catalog without a translation still shows its catalog name:
 /// <c>Text="{loc:CatalogName SolderMaskColor, IdPath=Id, NamePath=Name}"</c>.
 /// </summary>
@@ -123,7 +123,7 @@ public sealed class CatalogNameExtension : MarkupExtension
             }
 
             return values[0] is string id && parameter is string prefix
-                ? Localizer.Instance.Find($"{prefix}_{id}") ?? fallback
+                ? Localizer.Instance.Find(Localizer.CatalogKey(prefix, id)) ?? fallback
                 : fallback;
         }
 

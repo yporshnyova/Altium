@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using Altium.PcbManufacturing.Localization;
 using Altium.PcbManufacturing.Models;
 using Altium.PcbManufacturing.Services;
@@ -27,6 +28,8 @@ public sealed partial class PreferencesViewModel : ObservableValidator
     private readonly WorkflowNavigationState navigation;
     private readonly IConfirmationService confirmation;
     private readonly Localizer localizer;
+
+    private string quantityInput;
 
     // Incremented on each rejected Save & Continue; the view moves focus to the first invalid field when it changes.
     [ObservableProperty]
@@ -58,6 +61,7 @@ public sealed partial class PreferencesViewModel : ObservableValidator
         this.localizer.PropertyChanged += OnLocalizerPropertyChanged;
         this.preferences = preferences;
         this.preferences.PropertyChanged += OnPreferencesPropertyChanged;
+        quantityInput = FormatQuantity(preferences.Quantity);
         ErrorsChanged += OnErrorsChanged;
         this.navigation.SetReadinessCheck(WorkflowStep.Preferences, AreAllFieldsValid);
     }
@@ -84,7 +88,6 @@ public sealed partial class PreferencesViewModel : ObservableValidator
     /// The postcode as typed. The raw text is stored in the shared state even when invalid, so the user's input is never
     /// lost; consumers such as the future Order step must check it with <see cref="PolishPostcode.IsValid"/>.
     /// </summary>
-    /// <remarks>Validated on every change. The initial empty value is not reported until the user edits it.</remarks>
     [Required(ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.Validation_PostcodeRequired))]
     [RegularExpression(PolishPostcode.Pattern, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.Validation_PostcodeFormat))]
     public string Postcode
@@ -93,13 +96,41 @@ public sealed partial class PreferencesViewModel : ObservableValidator
         set => preferences.Postcode = value ?? string.Empty;
     }
 
+    /// <summary>
+    /// The board quantity as typed. Any text is accepted and kept, so invalid input is never lost or thrown away by the
+    /// binding; only a valid whole number (see <see cref="TryParseQuantity"/>) is written to the shared state.
+    /// </summary>
+    [Required(ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.Validation_QuantityRequired))]
+    [CustomValidation(typeof(PreferencesViewModel), nameof(ValidateQuantity))]
+    public string QuantityInput
+    {
+        get => quantityInput;
+        set
+        {
+            if (!SetProperty(ref quantityInput, value ?? string.Empty, validate: true))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(IsQuantityBlank));
+            if (TryParseQuantity(quantityInput, out int quantity))
+            {
+                preferences.Quantity = quantity;
+            }
+        }
+    }
+
     public bool HasProjectNameErrors => GetErrors(nameof(ProjectName)).Any();
 
     public bool HasPostcodeErrors => GetErrors(nameof(Postcode)).Any();
 
+    public bool HasQuantityErrors => GetErrors(nameof(QuantityInput)).Any();
+
     public bool IsProjectNameBlank => string.IsNullOrWhiteSpace(ProjectName);
 
     public bool IsPostcodeBlank => string.IsNullOrWhiteSpace(Postcode);
+
+    public bool IsQuantityBlank => string.IsNullOrWhiteSpace(QuantityInput);
 
     public PcbMaterial SelectedMaterial
     {
@@ -148,31 +179,32 @@ public sealed partial class PreferencesViewModel : ObservableValidator
     public string NotesCounterText => $"{Notes.Length} / {NotesMaxLength}";
 
     /// <summary>
-    /// Estimated price of the sample order with the selected material.
+    /// Localized board count of the stored quantity, e.g. <c>10 pcs</c> or <c>10 шт.</c>.
     /// </summary>
-    public PriceEstimate PriceEstimate => pricing.Estimate(SelectedMaterial);
-
-    public string BasePriceText => UsdFormat.Format(pricing.BasePrice);
+    public string QuantityText => localizer.Format("Boards_Format", preferences.Quantity);
 
     /// <summary>
-    /// The selected material's monetary impact, e.g. <c>+$208.60</c>, or the localized "Included" when there is none.
+    /// Estimated price for the selected material and the stored (last valid) quantity.
     /// </summary>
-    public string MaterialSurchargeText =>
-        PriceEstimate.MaterialSurcharge == 0
-            ? localizer[nameof(Strings.Pricing_Included)]
-            : UsdFormat.FormatChange(PriceEstimate.MaterialSurcharge);
+    public PriceEstimate PriceEstimate => pricing.Estimate(SelectedMaterial, preferences.Quantity);
 
-    public string EstimatedPriceText => UsdFormat.Format(PriceEstimate.EstimatedPrice);
+    public string BaseUnitPriceText => UsdFormat.Format(pricing.BaseUnitPrice);
 
     /// <summary>
-    /// The selected material's catalog production time, in days.
+    /// The selected material's impact on the price of one board, e.g. <c>+$208.60</c>, or the localized "Included"
+    /// when there is none.
     /// </summary>
-    public int EstimatedProductionDays => SelectedMaterial.ProductionDays;
+    public string MaterialSurchargePerUnitText =>
+        UsdFormat.FormatSurcharge(PriceEstimate.MaterialSurchargePerUnit, localizer[nameof(Strings.Pricing_Included)]);
+
+    public string EstimatedUnitPriceText => UsdFormat.Format(PriceEstimate.EstimatedUnitPrice);
+
+    public string EstimatedTotalPriceText => UsdFormat.Format(PriceEstimate.EstimatedTotalPrice);
 
     /// <summary>
-    /// The production time as localized text with the correct plural, e.g. <c>12 days</c> or <c>12 дней</c>.
+    /// The production time as localized text, e.g. <c>12 d</c> or <c>12 дн.</c>.
     /// </summary>
-    public string EstimatedProductionTimeText => localizer.FormatDays(EstimatedProductionDays);
+    public string EstimatedProductionTimeText => localizer.Format("Days_Format", SelectedMaterial.ProductionDays);
 
     /// <summary>
     /// Restores the default preferences, asking first when that would discard changes.
@@ -180,14 +212,31 @@ public sealed partial class PreferencesViewModel : ObservableValidator
     [RelayCommand]
     private void ResetToDefaults()
     {
-        if (!preferences.MatchesDefaults() && !confirmation.Confirm(
+        bool matchesDefaults = preferences.MatchesDefaults() && QuantityInput == FormatQuantity(ManufacturingPreferences.DefaultQuantity);
+        if (!matchesDefaults && !confirmation.Confirm(
                 localizer[nameof(Strings.Reset_ConfirmTitle)], localizer[nameof(Strings.Reset_ConfirmMessage)]))
         {
             return;
         }
 
         preferences.ResetToDefaults();
+        SyncQuantityInput();
         ClearErrors();
+    }
+
+    /// <summary>
+    /// Validation for <see cref="QuantityInput"/>; blank text is left to <see cref="RequiredAttribute"/>.
+    /// </summary>
+    public static ValidationResult? ValidateQuantity(string? text, ValidationContext context)
+    {
+        if (string.IsNullOrWhiteSpace(text) || TryParseQuantity(text, out _))
+        {
+            return ValidationResult.Success;
+        }
+
+        return new ValidationResult(
+            IsQuantityTooLarge(text) ? Strings.Validation_QuantityTooLarge : Strings.Validation_QuantityWholeNumber,
+            [context.MemberName ?? nameof(QuantityInput)]);
     }
 
     /// <summary>
@@ -239,12 +288,18 @@ public sealed partial class PreferencesViewModel : ObservableValidator
                 OnPropertyChanged(nameof(NotesCounterText));
                 ValidateProperty(Notes, nameof(Notes));
                 break;
+            case nameof(ManufacturingPreferences.Quantity):
+                SyncQuantityInput();
+                OnPropertyChanged(nameof(QuantityText));
+                OnPropertyChanged(nameof(PriceEstimate));
+                OnPropertyChanged(nameof(EstimatedTotalPriceText));
+                break;
             case nameof(ManufacturingPreferences.SelectedMaterial):
                 OnPropertyChanged(nameof(SelectedMaterial));
                 OnPropertyChanged(nameof(PriceEstimate));
-                OnPropertyChanged(nameof(MaterialSurchargeText));
-                OnPropertyChanged(nameof(EstimatedPriceText));
-                OnPropertyChanged(nameof(EstimatedProductionDays));
+                OnPropertyChanged(nameof(MaterialSurchargePerUnitText));
+                OnPropertyChanged(nameof(EstimatedUnitPriceText));
+                OnPropertyChanged(nameof(EstimatedTotalPriceText));
                 OnPropertyChanged(nameof(EstimatedProductionTimeText));
                 break;
             case nameof(ManufacturingPreferences.SelectedSolderMaskColor):
@@ -254,8 +309,15 @@ public sealed partial class PreferencesViewModel : ObservableValidator
                 OnPropertyChanged(nameof(SelectedBoardThickness));
                 break;
         }
+    }
 
-        navigation.RefreshAvailability();
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.PropertyName is nameof(ProjectName) or nameof(Postcode) or nameof(QuantityInput) or nameof(Notes))
+        {
+            navigation.RefreshAvailability();
+        }
     }
 
     // Localized texts follow the language. Fields that currently show an error are re-validated so the message is
@@ -267,11 +329,41 @@ public sealed partial class PreferencesViewModel : ObservableValidator
             return;
         }
 
-        OnPropertyChanged(nameof(MaterialSurchargeText));
+        OnPropertyChanged(nameof(QuantityText));
+        OnPropertyChanged(nameof(MaterialSurchargePerUnitText));
         OnPropertyChanged(nameof(EstimatedProductionTimeText));
         RevalidateIfInvalid(ProjectName, nameof(ProjectName));
         RevalidateIfInvalid(Postcode, nameof(Postcode));
+        RevalidateIfInvalid(QuantityInput, nameof(QuantityInput));
         RevalidateIfInvalid(Notes, nameof(Notes));
+    }
+
+    private static string FormatQuantity(int quantity) => quantity.ToString(CultureInfo.InvariantCulture);
+
+    private static bool TryParseQuantity(string? text, out int quantity)
+    {
+        quantity = 0;
+        return IsDigitsOnly(text)
+            && int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out quantity)
+            && quantity > 0;
+    }
+
+    private static bool IsQuantityTooLarge(string? text) =>
+        IsDigitsOnly(text) && text!.Any(c => c != '0') && !int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out _);
+
+    private static bool IsDigitsOnly(string? text) => !string.IsNullOrEmpty(text) && text.All(char.IsAsciiDigit);
+
+    private void SyncQuantityInput()
+    {
+        if (TryParseQuantity(quantityInput, out int typed) && typed == preferences.Quantity)
+        {
+            return;
+        }
+
+        quantityInput = FormatQuantity(preferences.Quantity);
+        OnPropertyChanged(nameof(QuantityInput));
+        OnPropertyChanged(nameof(IsQuantityBlank));
+        ValidateProperty(quantityInput, nameof(QuantityInput));
     }
 
     private void RevalidateIfInvalid(object value, string propertyName)
@@ -291,6 +383,9 @@ public sealed partial class PreferencesViewModel : ObservableValidator
                 break;
             case nameof(Postcode):
                 OnPropertyChanged(nameof(HasPostcodeErrors));
+                break;
+            case nameof(QuantityInput):
+                OnPropertyChanged(nameof(HasQuantityErrors));
                 break;
         }
     }

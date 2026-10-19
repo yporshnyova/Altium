@@ -1,521 +1,257 @@
-using System.ComponentModel.DataAnnotations;
-using Altium.PcbManufacturing.Localization;
 using Altium.PcbManufacturing.Models;
-using Altium.PcbManufacturing.Services;
 using Altium.PcbManufacturing.ViewModels;
 
 namespace Altium.PcbManufacturing.Tests;
 
+/// <summary>
+/// The Preferences screen: editing the shared state, the price summary, field validation (project name, postcode,
+/// quantity, notes) with recovery from invalid text, and the Reset / Save &amp; Continue commands. Where Save leads in the
+/// workflow is covered by <see cref="WorkflowTests"/>.
+/// </summary>
 public sealed class PreferencesViewModelTests
 {
-    private readonly PcbCatalog catalog = TestCatalogs.Create();
-    private readonly ManufacturingPreferences preferences;
-    private readonly PreferencesViewModel viewModel;
-    private readonly List<string?> changedProperties = [];
-    private readonly List<string?> errorsChangedProperties = [];
+    private const string quantityWholeNumberMessage = "Enter a whole number of boards, 1 or more.";
 
-    public PreferencesViewModelTests()
-    {
-        preferences = new ManufacturingPreferences(catalog);
-        viewModel = CreateViewModel();
-        viewModel.PropertyChanged += (_, e) => changedProperties.Add(e.PropertyName);
-        viewModel.ErrorsChanged += (_, e) => errorsChangedProperties.Add(e.PropertyName);
-    }
+    private readonly TestScreens screens = new();
 
-    // Initial state
+    private PreferencesViewModel ViewModel => screens.Preferences;
+
+    private ManufacturingPreferences State => screens.State;
+
+    private PcbCatalog Catalog => screens.Catalog;
+
+    // Shared state and summary
 
     [Fact]
-    public void Constructor_ExposesCatalogOptions()
+    public void Initially_ShowsTheDefaultsAndPriceWithoutErrors()
     {
-        Assert.Same(catalog.Materials, viewModel.Materials);
-        Assert.Same(catalog.SolderMaskColors, viewModel.SolderMaskColors);
-        Assert.Same(catalog.BoardThicknesses, viewModel.BoardThicknesses);
-    }
-
-    [Fact]
-    public void Constructor_ReadsCurrentValuesFromSharedState()
-    {
-        preferences.ProjectName = "Sensor board";
-        preferences.SelectedMaterial = catalog.Materials[1];
-        preferences.SelectedSolderMaskColor = catalog.SolderMaskColors[1];
-        preferences.SelectedBoardThickness = catalog.BoardThicknesses[1];
-        preferences.Postcode = "55-220";
-
-        PreferencesViewModel created = CreateViewModel();
-
-        Assert.Equal("Sensor board", created.ProjectName);
-        Assert.Same(catalog.Materials[1], created.SelectedMaterial);
-        Assert.Same(catalog.SolderMaskColors[1], created.SelectedSolderMaskColor);
-        Assert.Same(catalog.BoardThicknesses[1], created.SelectedBoardThickness);
-        Assert.Equal("55-220", created.Postcode);
+        Assert.Equal("PCB-001", ViewModel.ProjectName);
+        Assert.Equal("10", ViewModel.QuantityInput);
+        Assert.Same(Catalog.Materials[0], ViewModel.SelectedMaterial);
+        Assert.Equal("Included", ViewModel.MaterialSurchargePerUnitText);
+        Assert.Equal("$149.00", ViewModel.EstimatedUnitPriceText);
+        Assert.Equal("$1,490.00", ViewModel.EstimatedTotalPriceText);
+        Assert.Equal("5 d", ViewModel.EstimatedProductionTimeText);
+        // The empty postcode is not reported until it is edited or Save is clicked.
+        Assert.False(ViewModel.HasErrors);
     }
 
     [Fact]
-    public void Constructor_ProjectNameDefaultsToPcb001() => Assert.Equal("PCB-001", viewModel.ProjectName);
-
-    [Fact]
-    public void Constructor_ShowsPricingAndProductionTimeOfDefaultMaterial()
+    public void MaterialAndQuantity_UpdateTheSharedStateAndTheSummary()
     {
-        Assert.Equal(new PriceEstimate(149.00m, 0.00m, 149.00m), viewModel.PriceEstimate);
-        Assert.Equal("$149.00", viewModel.BasePriceText);
-        Assert.Equal("Included", viewModel.MaterialSurchargeText);
-        Assert.Equal("$149.00", viewModel.EstimatedPriceText);
-        Assert.Equal(5, viewModel.EstimatedProductionDays);
+        List<string?> changed = [];
+        ViewModel.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+        ViewModel.SelectedMaterial = Catalog.Materials[1];
+        ViewModel.QuantityInput = "3";
+
+        // Test catalog Rogers: 149.00 × 2.5 = 372.50 per board, 12 days.
+        Assert.Same(Catalog.Materials[1], State.SelectedMaterial);
+        Assert.Equal(3, State.Quantity);
+        Assert.Equal("+$223.50", ViewModel.MaterialSurchargePerUnitText);
+        Assert.Equal("$372.50", ViewModel.EstimatedUnitPriceText);
+        Assert.Equal("$1,117.50", ViewModel.EstimatedTotalPriceText);
+        Assert.Equal("3 pcs", ViewModel.QuantityText);
+        Assert.Equal("12 d", ViewModel.EstimatedProductionTimeText);
+        Assert.Contains(nameof(PreferencesViewModel.EstimatedUnitPriceText), changed);
+        Assert.Contains(nameof(PreferencesViewModel.EstimatedTotalPriceText), changed);
     }
 
     [Fact]
-    public void Constructor_HasNoValidationErrors()
+    public void SharedStateChangedElsewhere_IsShownAndValidated()
     {
-        Assert.False(viewModel.HasErrors);
-        Assert.False(viewModel.HasProjectNameErrors);
-        Assert.False(viewModel.HasPostcodeErrors);
-    }
+        State.ProjectName = "Sensor board";
+        State.Postcode = "invalid";
+        State.Quantity = 42;
 
-    // Selections
-
-    [Fact]
-    public void SelectedMaterial_Changed_UpdatesSharedState()
-    {
-        viewModel.SelectedMaterial = catalog.Materials[1];
-
-        Assert.Same(catalog.Materials[1], preferences.SelectedMaterial);
-        Assert.Same(catalog.Materials[1], viewModel.SelectedMaterial);
+        Assert.Equal("Sensor board", ViewModel.ProjectName);
+        Assert.Equal("42", ViewModel.QuantityInput);
+        Assert.Equal(["Use the NN-NNN format."], Errors(nameof(PreferencesViewModel.Postcode)));
     }
 
     [Fact]
-    public void SelectedMaterial_Changed_RecalculatesPricingAndProductionTime()
+    public void NullFromABinding_IsHandledSafely()
     {
-        viewModel.SelectedMaterial = catalog.Materials[1];
+        // A ComboBox can push null while its items are replaced; text boxes are normalised to empty text.
+        ViewModel.SelectedSolderMaskColor = null;
+        ViewModel.Postcode = null!;
 
-        // Rogers: 149.00 × 2.5 = 372.50
-        Assert.Equal(new PriceEstimate(149.00m, 223.50m, 372.50m), viewModel.PriceEstimate);
-        Assert.Equal("+$223.50", viewModel.MaterialSurchargeText);
-        Assert.Equal("$372.50", viewModel.EstimatedPriceText);
-        Assert.Equal("$149.00", viewModel.BasePriceText);
-        Assert.Equal(12, viewModel.EstimatedProductionDays);
+        Assert.Same(Catalog.SolderMaskColors[0], State.SelectedSolderMaskColor);
+        Assert.Equal(string.Empty, State.Postcode);
     }
 
-    [Fact]
-    public void SelectedMaterial_ChangedBack_ShowsSurchargeAsIncludedAgain()
-    {
-        viewModel.SelectedMaterial = catalog.Materials[1];
-        viewModel.SelectedMaterial = catalog.Materials[0];
-
-        Assert.Equal("Included", viewModel.MaterialSurchargeText);
-        Assert.Equal("$149.00", viewModel.EstimatedPriceText);
-    }
-
-    [Fact]
-    public void SelectedMaterial_Changed_NotifiesSelectionAndAllDerivedValues()
-    {
-        viewModel.SelectedMaterial = catalog.Materials[1];
-
-        Assert.Equal(
-            [
-                nameof(PreferencesViewModel.SelectedMaterial),
-                nameof(PreferencesViewModel.PriceEstimate),
-                nameof(PreferencesViewModel.MaterialSurchargeText),
-                nameof(PreferencesViewModel.EstimatedPriceText),
-                nameof(PreferencesViewModel.EstimatedProductionDays),
-                nameof(PreferencesViewModel.EstimatedProductionTimeText),
-            ],
-            changedProperties);
-    }
-
-    [Fact]
-    public void SelectedSolderMaskColor_Changed_UpdatesSharedStateAndNotifies()
-    {
-        viewModel.SelectedSolderMaskColor = catalog.SolderMaskColors[1];
-
-        Assert.Same(catalog.SolderMaskColors[1], preferences.SelectedSolderMaskColor);
-        Assert.Same(catalog.SolderMaskColors[1], viewModel.SelectedSolderMaskColor);
-        Assert.Equal([nameof(PreferencesViewModel.SelectedSolderMaskColor)], changedProperties);
-    }
-
-    [Fact]
-    public void SelectedBoardThickness_Changed_UpdatesSharedStateAndNotifies()
-    {
-        viewModel.SelectedBoardThickness = catalog.BoardThicknesses[1];
-
-        Assert.Same(catalog.BoardThicknesses[1], preferences.SelectedBoardThickness);
-        Assert.Same(catalog.BoardThicknesses[1], viewModel.SelectedBoardThickness);
-        Assert.Equal([nameof(PreferencesViewModel.SelectedBoardThickness)], changedProperties);
-    }
-
-    [Fact]
-    public void SharedStateChangedElsewhere_ViewModelReflectsItAndNotifies()
-    {
-        preferences.ProjectName = "Sensor board";
-        preferences.SelectedMaterial = catalog.Materials[1];
-        preferences.SelectedSolderMaskColor = catalog.SolderMaskColors[1];
-        preferences.SelectedBoardThickness = catalog.BoardThicknesses[1];
-        preferences.Postcode = "55-220";
-
-        Assert.Equal("Sensor board", viewModel.ProjectName);
-        Assert.Same(catalog.Materials[1], viewModel.SelectedMaterial);
-        Assert.Equal("$372.50", viewModel.EstimatedPriceText);
-        Assert.Same(catalog.SolderMaskColors[1], viewModel.SelectedSolderMaskColor);
-        Assert.Same(catalog.BoardThicknesses[1], viewModel.SelectedBoardThickness);
-        Assert.Equal("55-220", viewModel.Postcode);
-        Assert.Equal(
-            [
-                nameof(PreferencesViewModel.ProjectName),
-                nameof(PreferencesViewModel.IsProjectNameBlank),
-                nameof(PreferencesViewModel.SelectedMaterial),
-                nameof(PreferencesViewModel.PriceEstimate),
-                nameof(PreferencesViewModel.MaterialSurchargeText),
-                nameof(PreferencesViewModel.EstimatedPriceText),
-                nameof(PreferencesViewModel.EstimatedProductionDays),
-                nameof(PreferencesViewModel.EstimatedProductionTimeText),
-                nameof(PreferencesViewModel.SelectedSolderMaskColor),
-                nameof(PreferencesViewModel.SelectedBoardThickness),
-                nameof(PreferencesViewModel.Postcode),
-                nameof(PreferencesViewModel.IsPostcodeBlank),
-            ],
-            changedProperties);
-    }
-
-    [Fact]
-    public void AssigningCurrentValues_DoesNotNotify()
-    {
-        viewModel.Notes = string.Empty;
-        viewModel.ProjectName = ManufacturingPreferences.DefaultProjectName;
-        viewModel.SelectedMaterial = catalog.Materials[0];
-        viewModel.SelectedSolderMaskColor = catalog.SolderMaskColors[0];
-        viewModel.SelectedBoardThickness = catalog.BoardThicknesses[0];
-        viewModel.Postcode = string.Empty;
-
-        Assert.Empty(changedProperties);
-        Assert.Empty(errorsChangedProperties);
-    }
-
-    [Fact]
-    public void AssigningNullMaterial_ThrowsAndKeepsCurrentMaterial()
-    {
-        Assert.Throws<ArgumentNullException>(() => viewModel.SelectedMaterial = null!);
-
-        Assert.Same(catalog.Materials[0], preferences.SelectedMaterial);
-        Assert.Empty(changedProperties);
-    }
-
-    [Fact]
-    public void AssigningNullSolderMaskOrThickness_KeepsCurrentSelections()
-    {
-        viewModel.SelectedSolderMaskColor = null;
-        viewModel.SelectedBoardThickness = null;
-
-        Assert.Same(catalog.SolderMaskColors[0], preferences.SelectedSolderMaskColor);
-        Assert.Same(catalog.BoardThicknesses[0], preferences.SelectedBoardThickness);
-        Assert.Empty(changedProperties);
-    }
-
-    // Project name
+    // Validation
 
     [Theory]
-    [InlineData("Sensor board")]
-    [InlineData("PCB_002-rev B")]
-    [InlineData("X")]
-    [InlineData("Płytka główna #3 (v2.1)")]
-    public void ProjectName_Valid_HasNoErrorsAndUpdatesSharedState(string projectName)
+    [InlineData("Płytka główna #3 (v2.1)", null)]
+    [InlineData("", "Enter a project name.")]
+    [InlineData("   ", "Enter a project name.")]
+    public void ProjectName_IsRequired(string projectName, string? error)
     {
-        viewModel.ProjectName = projectName;
+        ViewModel.ProjectName = projectName;
 
-        Assert.False(viewModel.HasProjectNameErrors);
-        Assert.Equal(projectName, preferences.ProjectName);
+        Assert.Equal(error is null ? [] : [error], Errors(nameof(PreferencesViewModel.ProjectName)));
+        Assert.Equal(projectName, State.ProjectName);
     }
 
     [Fact]
-    public void ProjectName_Changed_NotifiesValueAndBlankState()
+    public void ProjectName_IsLimitedTo50Characters()
     {
-        viewModel.ProjectName = "Sensor board";
+        // The TextBox blocks typing past the limit; a longer value can still be assigned in code.
+        ViewModel.ProjectName = new string('a', 50);
+        Assert.False(ViewModel.HasProjectNameErrors);
 
-        Assert.Equal(
-            [nameof(PreferencesViewModel.ProjectName), nameof(PreferencesViewModel.IsProjectNameBlank)],
-            changedProperties);
-    }
-
-    [Theory]
-    [InlineData("", true)]
-    [InlineData("   ", true)]
-    [InlineData("PCB-002", false)]
-    public void IsProjectNameBlank_ReflectsWhitespaceOnlyText(string projectName, bool expected)
-    {
-        viewModel.ProjectName = projectName;
-
-        Assert.Equal(expected, viewModel.IsProjectNameBlank);
-    }
-
-    [Theory]
-    [InlineData("", true)]
-    [InlineData("   ", true)]
-    [InlineData("55-2", false)]
-    public void IsPostcodeBlank_ReflectsWhitespaceOnlyText(string postcode, bool expected)
-    {
-        viewModel.Postcode = "x";
-        viewModel.Postcode = postcode;
-
-        Assert.Equal(expected, viewModel.IsPostcodeBlank);
-    }
-
-    [Fact]
-    public void ProjectName_Exactly50Characters_IsValid()
-    {
-        viewModel.ProjectName = new string('a', 50);
-
-        Assert.False(viewModel.HasProjectNameErrors);
-    }
-
-    [Fact]
-    public void ProjectName_MoreThan50Characters_ReportsLengthError()
-    {
-        // The TextBox blocks typing past 50 characters; a longer value can still be assigned in code.
-        viewModel.ProjectName = new string('a', 51);
-
-        Assert.True(viewModel.HasProjectNameErrors);
+        ViewModel.ProjectName = new string('a', 51);
         Assert.Equal(["Use at most 50 characters."], Errors(nameof(PreferencesViewModel.ProjectName)));
     }
 
     [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    [InlineData("\t")]
-    public void ProjectName_EmptyOrWhitespace_ReportsRequiredError(string projectName)
+    [InlineData("55-220", null)]
+    [InlineData("55220", "Use the NN-NNN format.")]
+    [InlineData("55-220 ", "Use the NN-NNN format.")]
+    [InlineData("", "Enter a postcode.")]
+    public void Postcode_IsValidatedButAlwaysStored(string postcode, string? error)
     {
-        viewModel.ProjectName = projectName;
+        ViewModel.Postcode = "5";
 
-        Assert.True(viewModel.HasProjectNameErrors);
-        Assert.Equal(["Enter a project name."], Errors(nameof(PreferencesViewModel.ProjectName)));
+        ViewModel.Postcode = postcode;
+
+        Assert.Equal(error is null ? [] : [error], Errors(nameof(PreferencesViewModel.Postcode)));
+        Assert.Equal(postcode, State.Postcode);
+    }
+
+    [Theory]
+    [InlineData("1", 1)]
+    [InlineData("007", 7)]
+    [InlineData("2147483647", int.MaxValue)]
+    public void Quantity_ValidWholeNumber_IsStored(string input, int expected)
+    {
+        ViewModel.QuantityInput = input;
+
+        Assert.False(ViewModel.HasQuantityErrors);
+        Assert.Equal(expected, State.Quantity);
+    }
+
+    // Typing is filtered to digits in the view, but bound or programmatic text is still validated here.
+    [Theory]
+    [InlineData("0", quantityWholeNumberMessage)]
+    [InlineData("-5", quantityWholeNumberMessage)]
+    [InlineData("2.5", quantityWholeNumberMessage)]
+    [InlineData("abc", quantityWholeNumberMessage)]
+    [InlineData("", "Enter the number of boards.")]
+    [InlineData("2147483648", "The quantity is too large.")]
+    public void Quantity_InvalidText_IsReportedAndKeptWhileTheLastValidQuantityIsUsed(string input, string error)
+    {
+        ViewModel.QuantityInput = "4";
+
+        ViewModel.QuantityInput = input;
+
+        Assert.Equal([error], Errors(nameof(PreferencesViewModel.QuantityInput)));
+        Assert.Equal(input, ViewModel.QuantityInput);
+        Assert.Equal(4, State.Quantity);
+        Assert.Equal("$596.00", ViewModel.EstimatedTotalPriceText);
     }
 
     [Fact]
-    public void ProjectName_Null_IsTreatedAsEmpty()
+    public void Quantity_CorrectedAfterInvalidText_IsValidAndStoredAgain()
     {
-        viewModel.ProjectName = null!;
+        ViewModel.QuantityInput = "abc";
 
-        Assert.Equal(string.Empty, preferences.ProjectName);
-        Assert.Equal(["Enter a project name."], Errors(nameof(PreferencesViewModel.ProjectName)));
+        ViewModel.QuantityInput = "3";
+
+        Assert.False(ViewModel.HasErrors);
+        Assert.Equal(3, State.Quantity);
     }
 
     [Fact]
-    public void ProjectName_CorrectedToValid_ClearsErrorsAndNotifies()
+    public void Notes_AreOptionalAndLimitedTo300Characters()
     {
-        viewModel.ProjectName = "";
-        viewModel.ProjectName = "PCB-002";
+        ViewModel.Notes = new string('n', 300);
+        Assert.False(ViewModel.HasErrors);
+        Assert.Equal("300 / 300", ViewModel.NotesCounterText);
 
-        Assert.False(viewModel.HasErrors);
-        Assert.False(viewModel.HasProjectNameErrors);
-        Assert.Empty(viewModel.GetErrors(nameof(PreferencesViewModel.ProjectName)));
-        Assert.Equal([nameof(PreferencesViewModel.ProjectName), nameof(PreferencesViewModel.ProjectName)], errorsChangedProperties);
-        Assert.Equal(2, changedProperties.Count(name => name == nameof(PreferencesViewModel.HasProjectNameErrors)));
-    }
-
-    [Fact]
-    public void ProjectName_Invalid_DoesNotFlagPostcode()
-    {
-        viewModel.ProjectName = "";
-
-        Assert.True(viewModel.HasErrors);
-        Assert.False(viewModel.HasPostcodeErrors);
-        Assert.DoesNotContain(nameof(PreferencesViewModel.HasPostcodeErrors), changedProperties);
-    }
-
-    // Notes
-
-    [Fact]
-    public void Notes_DefaultEmpty_IsValid()
-    {
-        Assert.Equal(string.Empty, viewModel.Notes);
-        Assert.Equal("0 / 300", viewModel.NotesCounterText);
-        Assert.False(viewModel.HasErrors);
-    }
-
-    [Fact]
-    public void Notes_MultilineText_IsAcceptedAndStoredInSharedState()
-    {
-        const string notes = "Panelize 2x2, please.\r\nCall before shipping: +48 123-456-789!";
-
-        viewModel.Notes = notes;
-
-        Assert.Equal(notes, preferences.Notes);
-        Assert.Empty(viewModel.GetErrors(nameof(PreferencesViewModel.Notes)));
-    }
-
-    [Fact]
-    public void Notes_Exactly300Characters_IsValid()
-    {
-        viewModel.Notes = new string('n', 300);
-
-        Assert.False(viewModel.HasErrors);
-        Assert.Equal("300 / 300", viewModel.NotesCounterText);
-    }
-
-    [Fact]
-    public void Notes_MoreThan300Characters_ReportsLengthError()
-    {
-        viewModel.Notes = new string('n', 301);
-
-        Assert.True(viewModel.HasErrors);
+        ViewModel.Notes = new string('n', 301);
         Assert.Equal(["Use at most 300 characters."], Errors(nameof(PreferencesViewModel.Notes)));
     }
 
-    [Fact]
-    public void Notes_ClearedAfterEditing_IsValid()
-    {
-        viewModel.Notes = new string('n', 301);
-
-        viewModel.Notes = string.Empty;
-
-        Assert.False(viewModel.HasErrors);
-        Assert.Equal("0 / 300", viewModel.NotesCounterText);
-    }
+    // Reset to Defaults
 
     [Fact]
-    public void Notes_Changed_NotifiesValueAndCounter()
+    public void Reset_Confirmed_RestoresDefaultsEvenOverInvalidTextAndClearsErrors()
     {
-        viewModel.Notes = "Rush order";
+        ChangeEverything();
+        ViewModel.Postcode = "55-2";
+        ViewModel.QuantityInput = "abc";
 
-        Assert.Equal([nameof(PreferencesViewModel.Notes), nameof(PreferencesViewModel.NotesCounterText)], changedProperties);
-    }
+        ViewModel.ResetToDefaultsCommand.Execute(null);
 
-    [Theory]
-    [InlineData("a", "1 / 300")]
-    [InlineData("Line 1\r\nLine 2", "14 / 300")]
-    [InlineData("  ", "2 / 300")]
-    public void NotesCounterText_ReflectsActualStringLength(string notes, string expected)
-    {
-        viewModel.Notes = notes;
-
-        Assert.Equal(expected, viewModel.NotesCounterText);
+        Assert.Single(screens.Confirmation.Requests);
+        Assert.True(State.MatchesDefaults());
+        Assert.Equal("10", ViewModel.QuantityInput);
+        Assert.Equal("$149.00", ViewModel.EstimatedUnitPriceText);
+        Assert.False(ViewModel.HasErrors);
     }
 
     [Fact]
-    public void Notes_SetInSharedStateElsewhere_UpdatesCounterAndIsValidated()
+    public void Reset_Cancelled_KeepsEveryValue()
     {
-        preferences.Notes = new string('n', 301);
+        ChangeEverything();
+        screens.Confirmation.Answer = false;
 
-        Assert.Equal("301 / 300", viewModel.NotesCounterText);
-        Assert.Equal(["Use at most 300 characters."], Errors(nameof(PreferencesViewModel.Notes)));
+        ViewModel.ResetToDefaultsCommand.Execute(null);
+
+        Assert.Single(screens.Confirmation.Requests);
+        Assert.Equal("Sensor board", State.ProjectName);
+        Assert.Same(Catalog.Materials[1], State.SelectedMaterial);
+        Assert.Equal(25, State.Quantity);
     }
 
     [Fact]
-    public void Notes_Null_IsTreatedAsEmpty()
+    public void Reset_AtDefaults_DoesNotAsk()
     {
-        viewModel.Notes = "x";
+        ViewModel.ResetToDefaultsCommand.Execute(null);
 
-        viewModel.Notes = null!;
-
-        Assert.Equal(string.Empty, preferences.Notes);
+        Assert.Empty(screens.Confirmation.Requests);
     }
 
-    // Postcode
-
-    [Theory]
-    [InlineData("55-220")]
-    [InlineData("00-001")]
-    [InlineData("99-999")]
-    public void Postcode_Valid_HasNoErrorsAndUpdatesSharedState(string postcode)
-    {
-        viewModel.Postcode = postcode;
-
-        Assert.False(viewModel.HasErrors);
-        Assert.False(viewModel.HasPostcodeErrors);
-        Assert.Equal(postcode, preferences.Postcode);
-    }
-
-    [Theory]
-    [InlineData("55220")]
-    [InlineData("5-5220")]
-    [InlineData("55-22")]
-    [InlineData("55-2200")]
-    [InlineData("ab-cde")]
-    [InlineData("55 220")]
-    [InlineData(" 55-220")]
-    [InlineData("55-220 ")]
-    [InlineData("55-220\n")]
-    [InlineData("٥٥-٢٢٠")]
-    public void Postcode_Malformed_ReportsFormatError(string postcode)
-    {
-        viewModel.Postcode = postcode;
-
-        Assert.True(viewModel.HasPostcodeErrors);
-        Assert.Equal(["Use the NN-NNN format."], Errors(nameof(PreferencesViewModel.Postcode)));
-    }
+    // Save & Continue validation
 
     [Fact]
-    public void Postcode_Malformed_IsStillStoredInSharedState()
+    public void Save_UntouchedEmptyPostcode_ReportsIt()
     {
-        viewModel.Postcode = "55-2";
+        ViewModel.SaveAndContinueCommand.Execute(null);
 
-        Assert.Equal("55-2", preferences.Postcode);
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Postcode_ClearedAfterEditing_ReportsRequiredError(string postcode)
-    {
-        viewModel.Postcode = "55-220";
-
-        viewModel.Postcode = postcode;
-
-        Assert.True(viewModel.HasPostcodeErrors);
         Assert.Equal(["Enter a postcode."], Errors(nameof(PreferencesViewModel.Postcode)));
     }
 
-    [Fact]
-    public void Postcode_Null_IsTreatedAsEmpty()
+    [Theory]
+    [InlineData("", "55-220", "10")]
+    [InlineData("PCB-001", "55-2", "10")]
+    [InlineData("PCB-001", "55-220", "0")]
+    public void Save_Invalid_StaysOnPreferencesAndAsksTheViewToFocusTheError(string projectName, string postcode, string quantity)
     {
-        viewModel.Postcode = "55-220";
+        ViewModel.ProjectName = projectName;
+        ViewModel.Postcode = postcode;
+        ViewModel.QuantityInput = quantity;
 
-        viewModel.Postcode = null!;
+        ViewModel.SaveAndContinueCommand.Execute(null);
 
-        Assert.Equal(string.Empty, preferences.Postcode);
-        Assert.Equal(["Enter a postcode."], Errors(nameof(PreferencesViewModel.Postcode)));
+        Assert.Equal(WorkflowStep.Preferences, screens.Navigation.CurrentStep);
+        Assert.False(screens.Navigation.IsQuoteUnlocked);
+        Assert.Equal(1, ViewModel.InvalidSubmitCount);
     }
 
-    [Fact]
-    public void Postcode_CorrectedFromInvalidToValid_ClearsErrors()
+    private void ChangeEverything()
     {
-        viewModel.Postcode = "55-2";
-        Assert.True(viewModel.HasPostcodeErrors);
-
-        viewModel.Postcode = "55-220";
-
-        Assert.False(viewModel.HasErrors);
-        Assert.False(viewModel.HasPostcodeErrors);
+        ViewModel.ProjectName = "Sensor board";
+        ViewModel.Postcode = "55-220";
+        ViewModel.QuantityInput = "25";
+        ViewModel.SelectedMaterial = Catalog.Materials[1];
+        ViewModel.SelectedSolderMaskColor = Catalog.SolderMaskColors[1];
+        ViewModel.SelectedBoardThickness = Catalog.BoardThicknesses[1];
+        ViewModel.Notes = "Rush";
     }
-
-    [Fact]
-    public void Postcode_BecomingInvalidAndValid_RaisesErrorsChangedAndErrorStateNotifications()
-    {
-        viewModel.Postcode = "55-2";
-        viewModel.Postcode = "55-220";
-
-        Assert.Equal([nameof(PreferencesViewModel.Postcode), nameof(PreferencesViewModel.Postcode)], errorsChangedProperties);
-        Assert.Equal(2, changedProperties.Count(name => name == nameof(PreferencesViewModel.HasErrors)));
-        Assert.Equal(2, changedProperties.Count(name => name == nameof(PreferencesViewModel.HasPostcodeErrors)));
-    }
-
-    [Fact]
-    public void Postcode_SetInSharedStateElsewhere_IsValidated()
-    {
-        preferences.Postcode = "invalid";
-
-        Assert.True(viewModel.HasPostcodeErrors);
-        Assert.Equal(["Use the NN-NNN format."], Errors(nameof(PreferencesViewModel.Postcode)));
-    }
-
-    [Fact]
-    public void Postcode_Invalid_DoesNotFlagProjectName()
-    {
-        viewModel.Postcode = "55-2";
-
-        Assert.False(viewModel.HasProjectNameErrors);
-    }
-
-    private PreferencesViewModel CreateViewModel() =>
-        new(catalog, preferences, new PcbPricingService(catalog), new WorkflowNavigationState(), new FakeConfirmationService(), new Localizer());
 
     private IEnumerable<string?> Errors(string propertyName) =>
-        viewModel.GetErrors(propertyName).Select(result => result.ErrorMessage);
+        ViewModel.GetErrors(propertyName).Select(result => result.ErrorMessage);
 }

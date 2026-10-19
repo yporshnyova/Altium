@@ -64,9 +64,10 @@ public sealed class Localizer : ObservableObject
     public string Format(string key, params object?[] args) => string.Format(Culture, this[key], args);
 
     /// <summary>
-    /// A number of days with the grammatically correct word, e.g. "1 day" / "5 days", "1 день" / "3 дня" / "5 дней".
+    /// The resource key of a catalog entry's translated name: <c>{prefix}_{id}</c> with hyphens replaced by <c>_</c>, the
+    /// only character used in catalog ids that is not valid in resource names, e.g. <c>SurfaceFinish_hasl_lead_free</c>.
     /// </summary>
-    public string FormatDays(int days) => Format(DaysKey(days), days);
+    public static string CatalogKey(string prefix, string id) => $"{prefix}_{id.Replace('-', '_')}";
 
     public void SetLanguage(AppLanguage language)
     {
@@ -86,21 +87,5 @@ public sealed class Localizer : ObservableObject
         Language = language;
         Culture = language == AppLanguage.Russian ? russianCulture : englishCulture;
         Strings.Culture = Culture;
-    }
-
-    private string DaysKey(int days)
-    {
-        if (Language != AppLanguage.Russian)
-        {
-            return days == 1 ? nameof(Strings.Days_One) : nameof(Strings.Days_Many);
-        }
-
-        // Russian plural rules: 1, 21, 31… → день; 2–4, 22–24… → дня; everything else (incl. 11–14) → дней.
-        int lastTwo = Math.Abs(days) % 100;
-        int last = lastTwo % 10;
-        return (lastTwo is >= 11 and <= 14) ? nameof(Strings.Days_Many)
-            : last == 1 ? nameof(Strings.Days_One)
-            : last is >= 2 and <= 4 ? nameof(Strings.Days_Few)
-            : nameof(Strings.Days_Many);
     }
 }

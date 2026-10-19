@@ -40,6 +40,7 @@ public static class ServiceRegistration
         services.AddSingleton<MainWindow>();
 
         services.AddSingleton<PreferencesViewModel>();
+        services.AddSingleton<QuoteViewModel>();
         services.AddSingleton<MainWindowViewModel>();
 
         return services;

@@ -15,6 +15,8 @@ public sealed partial class ManufacturingPreferences : ObservableObject
 {
     public const string DefaultProjectName = "PCB-001";
 
+    public const int DefaultQuantity = 10;
+
     private readonly PcbMaterial defaultMaterial;
     private readonly SolderMaskColor defaultSolderMaskColor;
     private readonly BoardThickness defaultBoardThickness;
@@ -35,6 +37,9 @@ public sealed partial class ManufacturingPreferences : ObservableObject
     private string postcode = string.Empty;
 
     [ObservableProperty]
+    private int quantity = DefaultQuantity;
+
+    [ObservableProperty]
     private string notes = string.Empty;
 
     public ManufacturingPreferences(PcbCatalog catalog)
@@ -53,6 +58,7 @@ public sealed partial class ManufacturingPreferences : ObservableObject
     public bool MatchesDefaults() =>
         ProjectName == DefaultProjectName
         && Postcode.Length == 0
+        && Quantity == DefaultQuantity
         && SelectedMaterial == defaultMaterial
         && SelectedSolderMaskColor == defaultSolderMaskColor
         && SelectedBoardThickness == defaultBoardThickness
@@ -62,9 +68,12 @@ public sealed partial class ManufacturingPreferences : ObservableObject
     {
         ProjectName = DefaultProjectName;
         Postcode = string.Empty;
+        Quantity = DefaultQuantity;
         SelectedMaterial = defaultMaterial;
         SelectedSolderMaskColor = defaultSolderMaskColor;
         SelectedBoardThickness = defaultBoardThickness;
         Notes = string.Empty;
     }
+
+    partial void OnQuantityChanging(int value) => ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
 }

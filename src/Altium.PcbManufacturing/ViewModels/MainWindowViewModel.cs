@@ -11,10 +11,6 @@ namespace Altium.PcbManufacturing.ViewModels;
 /// Root data context of the main window: one view model per tab, the workflow navigation, and the header's language
 /// and theme settings.
 /// </summary>
-/// <remarks>
-/// Language and theme changes take effect immediately and are saved right away; they never touch the manufacturing
-/// preferences. 
-/// </remarks>
 public sealed partial class MainWindowViewModel : ObservableObject
 {
     private readonly Localizer localizer;
@@ -23,18 +19,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public MainWindowViewModel(
         PreferencesViewModel preferences,
+        QuoteViewModel quote,
         WorkflowNavigationState navigationState,
         Localizer localizer,
         IThemeService themeService,
         UiSettingsStore settingsStore)
     {
         ArgumentNullException.ThrowIfNull(preferences);
+        ArgumentNullException.ThrowIfNull(quote);
         ArgumentNullException.ThrowIfNull(navigationState);
         ArgumentNullException.ThrowIfNull(localizer);
         ArgumentNullException.ThrowIfNull(themeService);
         ArgumentNullException.ThrowIfNull(settingsStore);
 
         Preferences = preferences;
+        Quote = quote;
         NavigationState = navigationState;
         this.localizer = localizer;
         this.themeService = themeService;
@@ -43,6 +42,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     public PreferencesViewModel Preferences { get; }
+
+    public QuoteViewModel Quote { get; }
 
     public WorkflowNavigationState NavigationState { get; }
 
@@ -63,9 +64,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    /// <summary>
-    /// Whether the dark theme is active; the header toggle offers the other theme.
-    /// </summary>
     public bool IsDarkTheme => themeService.Theme == AppTheme.Dark;
 
     [RelayCommand]

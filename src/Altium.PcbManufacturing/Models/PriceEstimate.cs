@@ -1,10 +1,16 @@
 namespace Altium.PcbManufacturing.Models;
 
 /// <summary>
-/// Estimated manufacturing price of the sample order for one material, in US dollars rounded to cents.
+/// Estimated manufacturing price of an order: the per-board amounts and the order total, in US dollars.
 /// </summary>
-/// <remarks>An estimate from catalog data only; it is not a final commercial quote.</remarks>
-/// <param name="BasePrice">The catalog base price.</param>
-/// <param name="MaterialSurcharge">The amount the material adds to the base price; zero for a 1.00 multiplier.</param>
-/// <param name="EstimatedPrice">The base price plus the material surcharge.</param>
-public sealed record PriceEstimate(decimal BasePrice, decimal MaterialSurcharge, decimal EstimatedPrice);
+/// <param name="BaseUnitPrice">The catalog base price of one board.</param>
+/// <param name="MaterialSurchargePerUnit">The amount the material adds to one board; zero for a 1.00 multiplier.</param>
+/// <param name="EstimatedUnitPrice">The base unit price plus the material surcharge per board.</param>
+/// <param name="Quantity">The number of boards.</param>
+/// <param name="EstimatedTotalPrice">The estimated unit price multiplied by the quantity.</param>
+public sealed record PriceEstimate(
+    decimal BaseUnitPrice,
+    decimal MaterialSurchargePerUnit,
+    decimal EstimatedUnitPrice,
+    int Quantity,
+    decimal EstimatedTotalPrice);

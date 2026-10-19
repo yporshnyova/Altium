@@ -79,34 +79,19 @@ internal static partial class PcbCatalogValidator
             }
         }
 
-        if (HasEntries(catalog.ParameterGroups, "parameterGroups", errors))
+        BoardSpecification? specification = catalog.BoardSpecification;
+        if (specification is null)
         {
-            for (int i = 0; i < catalog.ParameterGroups.Count; i++)
-            {
-                ManufacturingParameterGroup group = catalog.ParameterGroups[i];
-                string path = $"parameterGroups[{i}]";
-                if (group is null)
-                {
-                    continue;
-                }
-
-                RequireText(group.Name, $"{path}.name", errors);
-                if (HasEntries(group.Parameters, $"{path}.parameters", errors))
-                {
-                    for (int j = 0; j < group.Parameters.Count; j++)
-                    {
-                        ManufacturingParameter parameter = group.Parameters[j];
-                        if (parameter is null)
-                        {
-                            errors.Add($"{path}.parameters[{j}] is missing.");
-                            continue;
-                        }
-
-                        RequireText(parameter.Name, $"{path}.parameters[{j}].name", errors);
-                        RequireText(parameter.Value, $"{path}.parameters[{j}].value", errors);
-                    }
-                }
-            }
+            errors.Add("boardSpecification is required.");
+        }
+        else
+        {
+            RequirePositive(specification.WidthMm, "boardSpecification.widthMm", errors);
+            RequirePositive(specification.HeightMm, "boardSpecification.heightMm", errors);
+            RequirePositive(specification.LayerCount, "boardSpecification.layerCount", errors);
+            RequirePositive(specification.CopperWeightOz, "boardSpecification.copperWeightOz", errors);
+            RequireOption(specification.SurfaceFinish, "boardSpecification.surfaceFinish", errors);
+            RequireOption(specification.SilkscreenColor, "boardSpecification.silkscreenColor", errors);
         }
 
         return errors;
@@ -144,6 +129,26 @@ internal static partial class PcbCatalogValidator
                 errors.Add($"{path}[{i}].id '{id}' is duplicated.");
             }
         }
+    }
+
+    private static void RequirePositive(decimal value, string path, List<string> errors)
+    {
+        if (value <= 0)
+        {
+            errors.Add($"{path} must be greater than zero.");
+        }
+    }
+
+    private static void RequireOption(CatalogOption? option, string path, List<string> errors)
+    {
+        if (option is null)
+        {
+            errors.Add($"{path} is required.");
+            return;
+        }
+
+        RequireText(option.Id, $"{path}.id", errors);
+        RequireText(option.Name, $"{path}.name", errors);
     }
 
     private static void RequireText(string? value, string path, List<string> errors)

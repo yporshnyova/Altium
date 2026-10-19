@@ -8,4 +8,8 @@
         <views:PreferencesView />
     </DataTemplate>
 
+    <DataTemplate DataType="{x:Type vm:QuoteViewModel}">
+        <views:QuoteView />
+    </DataTemplate>
+
 </ResourceDictionary>

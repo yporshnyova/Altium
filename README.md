@@ -3,7 +3,7 @@
 A WPF desktop application that simulates creating a PCB (Printed Circuit Board) manufacturing order.
 It will provide a single window with three tabs: **Preferences**, **Quote**, and **Order**.
 
-> **Current status: Phase 3.6 — sequential Preferences → Quote → Order workflow, Preferences, English/Russian localization and light/dark themes are implemented. Quote and Order are placeholders.**
+> **Current status: Phase 4.1 — sequential Preferences → Quote → Order workflow, Preferences with board quantity, quantity-aware price estimate, the manufacturing Quote with top and side board previews, English/Russian localization and light/dark themes are implemented. Order is a placeholder.**
 
 ## Assumptions
 
@@ -11,10 +11,16 @@ The assignment leaves these open; they are documented choices pending review:
 
 - **Postcode format**: Polish `NN-NNN` (for example `55-220`), ASCII digits only, no surrounding whitespace
   (`Models/PolishPostcode.cs`). The typed value is kept in the shared preferences even while invalid.
-- **Pricing**: the sample order has a fixed base price of $149.00 USD (`basePriceUsd` in `Data/pcb-catalog.json`).
-  `EstimatedPrice = BasePrice × material priceMultiplier`, rounded to cents (midpoint away from zero), and
-  `MaterialSurcharge = EstimatedPrice − BasePrice` (`Services/PcbPricingService.cs`). It is an estimate, not a final quote.
-- **Production time**: the selected material's catalog `productionDays`, shown as the estimated production time.
+- **Pricing**: a simplified linear model, not a manufacturer quotation (`Services/PcbPricingService.cs`). The catalog
+  `basePriceUsd` ($149.00) is the price of one board. `EstimatedUnitPrice = BaseUnitPrice × material priceMultiplier`,
+  rounded to cents (midpoint away from zero); `MaterialSurchargePerUnit = EstimatedUnitPrice − BaseUnitPrice`;
+  `EstimatedTotalPrice = EstimatedUnitPrice × Quantity`. There are no bulk discounts, setup fees, shipping or taxes.
+- **Quantity**: number of boards, default 10, entered on Preferences. Any positive whole number written with ASCII
+  digits is accepted (leading zeros allowed); there is no business upper limit, only the technical `int` range
+  (`Models/BoardQuantity.cs`). Invalid text stays in the field with an error and is not stored; the summary total shows
+  a dash until it is corrected.
+- **Production time**: the selected material's catalog `productionDays`, shown as the estimated production time; it
+  does not depend on the quantity.
 - **Project name**: defaults to `PCB-001`; required (not blank) and at most 50 characters, with no character restrictions.
 - **Notes**: optional, at most 300 characters; a line break typed in the field counts as two characters (CR LF).
 - **Postcode input**: the field accepts only digits and inserts the hyphen itself (`Views/Behaviors/PostcodeMask.cs`);
@@ -28,6 +34,23 @@ The assignment leaves these open; they are documented choices pending review:
   when going back, and nothing is cleared. A step is available only while every earlier step is valid: if Preferences
   becomes invalid, the unlocked Quote tab is disabled at once and re-enabled as soon as the input is corrected (no new
   Save & Continue needed). Order stays locked until the Quote step can be completed.
+- **Board specification**: the Quote shows a fixed sample board (`boardSpecification` in `Data/pcb-catalog.json`):
+  100 × 80 mm, 2 copper layers, 1 oz copper, HASL lead-free finish, white silkscreen. These values are placeholders,
+  not taken from the assignment; they are read-only and do not affect the price. The quantity and the price are the
+  ones from Preferences.
+- **Parameter table**: Quote lists its read-only parameters in groups (Dimensions, Layers, Finish, Board preferences)
+  from `QuoteViewModel.ParameterGroups`, rendered by nested `ItemsControl`s with data templates. The structure is a
+  fixed read-only list; each row reads its value from the specification or the shared preferences.
+- **Board preview**: a top view (`Views/PcbPreviewView.xaml`) whose layers are frozen WPF geometries generated from the
+  board size by `Views/Graphics/PcbArtworkBuilder.cs` (rounded outline, mounting holes, traces, a generated QFP
+  footprint, header, passives and vias; the layout is decorative). A `Viewbox` scales it uniformly and centres it, and
+  its height follows the panel width up to a cap. The outline is filled with the selected solder mask colour. A schematic side view
+  (`Views/PcbSideView.xaml`): mask / core / mask, with the profile height proportional to the selected thickness
+  (the thickest catalog option fills the reserved band) and the exact thickness beside it. Core colours are an
+  illustrative convention in `Views/Converters/SubstrateBrushConverter.cs` (FR-4 amber, FR-4 High Tg deeper amber,
+  Rogers off-white, unknown materials neutral grey), not the physical appearance or a real layer stack-up.
+- **Continue to Order**: completes the Quote step and opens Order only while Preferences is valid; Back to Preferences
+  keeps all data and progress.
 
 ## Localization and Themes
 

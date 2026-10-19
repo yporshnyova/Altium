@@ -18,6 +18,7 @@
     FontFamily="Segoe UI"
     FontSize="13"
     Foreground="{DynamicResource TextPrimaryBrush}"
+    Icon="pack://application:,,,/Assets/Branding/pcb-manufacturing.ico"
     UseLayoutRounding="True"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
@@ -108,6 +109,7 @@
             <TabItem
                 AutomationProperties.Name="{loc:Text Tab_Quote}"
                 IsEnabled="{Binding NavigationState.IsQuoteAvailable}"
+                Content="{Binding Quote, Mode=OneTime}"
                 Tag="{x:Static vm:WorkflowStep.Quote}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
@@ -116,7 +118,6 @@
                         <iconPacks:PackIconMaterial Style="{StaticResource StepCompletedIconStyle}" Tag="{Binding NavigationState.IsQuoteCompleted}" />
                     </StackPanel>
                 </TabItem.Header>
-                <TextBlock Style="{StaticResource PlaceholderTextStyle}" Text="{loc:Text Placeholder_Quote}" />
             </TabItem>
             <TabItem
                 AutomationProperties.Name="{loc:Text Tab_Order}"

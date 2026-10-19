@@ -15,28 +15,12 @@
     { "id": "0.8mm", "millimeters": 0.8 },
     { "id": "2.0mm", "millimeters": 2.0 }
   ],
-  "parameterGroups": [
-    {
-      "name": "Dimensions",
-      "parameters": [
-        { "name": "Width", "value": "100 mm" },
-        { "name": "Height", "value": "80 mm" },
-        { "name": "Boards quantity", "value": "10" }
-      ]
-    },
-    {
-      "name": "Layers",
-      "parameters": [
-        { "name": "Layer count", "value": "2" },
-        { "name": "Copper weight", "value": "1 oz" }
-      ]
-    },
-    {
-      "name": "Finish",
-      "parameters": [
-        { "name": "Surface finish", "value": "HASL lead-free" },
-        { "name": "Silkscreen color", "value": "White" }
-      ]
-    }
-  ]
+  "boardSpecification": {
+    "widthMm": 100,
+    "heightMm": 80,
+    "layerCount": 2,
+    "copperWeightOz": 1,
+    "surfaceFinish": { "id": "hasl-lead-free", "name": "HASL lead-free" },
+    "silkscreenColor": { "id": "white", "name": "White" }
+  }
 }
