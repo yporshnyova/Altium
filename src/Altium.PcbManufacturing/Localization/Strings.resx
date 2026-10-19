@@ -138,9 +138,6 @@
   <data name="Tab_Order" xml:space="preserve">
     <value>Order</value>
   </data>
-  <data name="Placeholder_Order" xml:space="preserve">
-    <value>The Order tab will be available in a later phase.</value>
-  </data>
   <data name="Preferences_ProjectBasics" xml:space="preserve">
     <value>Project basics</value>
   </data>
@@ -362,5 +359,44 @@
   </data>
   <data name="Boards_Format" xml:space="preserve">
     <value>{0} pcs.</value>
+  </data>
+  <data name="Order_Summary" xml:space="preserve">
+    <value>Order summary</value>
+  </data>
+  <data name="Order_ReviewHint" xml:space="preserve">
+    <value>Check the details below before placing the order. To change them, go back to Preferences.</value>
+  </data>
+  <data name="Order_DeliveryPostcode" xml:space="preserve">
+    <value>Delivery postcode</value>
+  </data>
+  <data name="Order_SizeAndLayers" xml:space="preserve">
+    <value>Size and layers</value>
+  </data>
+  <data name="Order_ConfirmTitle" xml:space="preserve">
+    <value>Place Order</value>
+  </data>
+  <data name="Order_ConfirmQuestion" xml:space="preserve">
+    <value>Place this order?</value>
+  </data>
+  <data name="Order_PlacedTitle" xml:space="preserve">
+    <value>Order confirmed</value>
+  </data>
+  <data name="Order_PlacedMessage" xml:space="preserve">
+    <value>Your order has been confirmed in this application. It has not been sent to a manufacturer.</value>
+  </data>
+  <data name="Actions_BackToQuote" xml:space="preserve">
+    <value>Back to Quote</value>
+  </data>
+  <data name="Actions_PlaceOrder" xml:space="preserve">
+    <value>Place Order</value>
+  </data>
+  <data name="Actions_NewOrder" xml:space="preserve">
+    <value>New Order</value>
+  </data>
+  <data name="Pricing_SurchargePerBoard" xml:space="preserve">
+    <value>+{0} / board</value>
+  </data>
+  <data name="Workflow_OrderCompleted" xml:space="preserve">
+    <value>The order is complete. Start a new order to make changes.</value>
   </data>
 </root>

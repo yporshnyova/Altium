@@ -194,6 +194,15 @@ public sealed partial class PreferencesViewModel : ObservableValidator
     public string MaterialSurchargePerUnitText =>
         UsdFormat.FormatSurcharge(PriceEstimate.MaterialSurchargePerUnit, localizer[nameof(Strings.Pricing_Included)]);
 
+    /// <summary>
+    /// The indicator beside the material selector: the selected material's extra cost per board, e.g.
+    /// <c>+$37.25 / board</c>, or the localized "Included" when there is none.
+    /// </summary>
+    public string MaterialSurchargeText =>
+        PriceEstimate.MaterialSurchargePerUnit == 0
+            ? localizer[nameof(Strings.Pricing_Included)]
+            : localizer.Format(nameof(Strings.Pricing_SurchargePerBoard), UsdFormat.Format(PriceEstimate.MaterialSurchargePerUnit));
+
     public string EstimatedUnitPriceText => UsdFormat.Format(PriceEstimate.EstimatedUnitPrice);
 
     public string EstimatedTotalPriceText => UsdFormat.Format(PriceEstimate.EstimatedTotalPrice);
@@ -216,6 +225,14 @@ public sealed partial class PreferencesViewModel : ObservableValidator
             return;
         }
 
+        RestoreDefaults();
+    }
+
+    /// <summary>
+    /// Restores the default preferences without asking, and clears every validation message, as for a fresh start.
+    /// </summary>
+    public void RestoreDefaults()
+    {
         preferences.ResetToDefaults();
         SyncQuantityInput();
         ClearErrors();
@@ -243,15 +260,18 @@ public sealed partial class PreferencesViewModel : ObservableValidator
     [RelayCommand]
     private void SaveAndContinue()
     {
-        if (ValidateBeforeContinuing())
+        if (ValidateAndShowErrors())
         {
             navigation.CompleteStep(WorkflowStep.Preferences);
         }
     }
 
-    // Explicit validation for Save & Continue: every field is validated with visible messages and, if any is invalid,
-    // the view is asked to focus the first error.
-    private bool ValidateBeforeContinuing()
+    /// <summary>
+    /// Explicit validation, as for Save &amp; Continue: every field is validated with visible messages and, if any is
+    /// invalid, the view is asked to focus the first error. Place Order uses it to re-check the current input.
+    /// </summary>
+    /// <returns>Whether every field is valid.</returns>
+    public bool ValidateAndShowErrors()
     {
         ValidateAllProperties();
         if (HasErrors)
@@ -294,6 +314,7 @@ public sealed partial class PreferencesViewModel : ObservableValidator
             case nameof(ManufacturingPreferences.SelectedMaterial):
                 OnPropertyChanged(nameof(SelectedMaterial));
                 OnPropertyChanged(nameof(PriceEstimate));
+                OnPropertyChanged(nameof(MaterialSurchargeText));
                 OnPropertyChanged(nameof(MaterialSurchargePerUnitText));
                 OnPropertyChanged(nameof(EstimatedUnitPriceText));
                 OnPropertyChanged(nameof(EstimatedTotalPriceText));
@@ -327,6 +348,7 @@ public sealed partial class PreferencesViewModel : ObservableValidator
         }
 
         OnPropertyChanged(nameof(QuantityText));
+        OnPropertyChanged(nameof(MaterialSurchargeText));
         OnPropertyChanged(nameof(MaterialSurchargePerUnitText));
         OnPropertyChanged(nameof(EstimatedProductionTimeText));
         RevalidateIfInvalid(ProjectName, nameof(ProjectName));

@@ -40,9 +40,11 @@ public static class ServiceRegistration
         // One main window per application, so its view models share the window's (and the shared state's) lifetime.
         services.AddSingleton<MainWindow>();
 
+        services.AddSingleton<MainWindowViewModel>();
+
         services.AddSingleton<PreferencesViewModel>();
         services.AddSingleton<QuoteViewModel>();
-        services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<OrderViewModel>();
 
         return services;
     }

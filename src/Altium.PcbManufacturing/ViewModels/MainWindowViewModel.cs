@@ -20,6 +20,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public MainWindowViewModel(
         PreferencesViewModel preferences,
         QuoteViewModel quote,
+        OrderViewModel order,
         WorkflowNavigationState navigationState,
         Localizer localizer,
         IThemeService themeService,
@@ -27,6 +28,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(preferences);
         ArgumentNullException.ThrowIfNull(quote);
+        ArgumentNullException.ThrowIfNull(order);
         ArgumentNullException.ThrowIfNull(navigationState);
         ArgumentNullException.ThrowIfNull(localizer);
         ArgumentNullException.ThrowIfNull(themeService);
@@ -34,6 +36,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         Preferences = preferences;
         Quote = quote;
+        Order = order;
         NavigationState = navigationState;
         this.localizer = localizer;
         this.themeService = themeService;
@@ -44,6 +47,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public PreferencesViewModel Preferences { get; }
 
     public QuoteViewModel Quote { get; }
+
+    public OrderViewModel Order { get; }
 
     public WorkflowNavigationState NavigationState { get; }
 

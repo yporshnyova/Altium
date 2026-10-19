@@ -20,6 +20,7 @@ internal sealed class TestScreens
         PcbPricingService pricing = new(Catalog);
         Preferences = new PreferencesViewModel(Catalog, State, pricing, Navigation, Confirmation, Localizer);
         Quote = new QuoteViewModel(Catalog, State, pricing, Navigation, Localizer);
+        Order = new OrderViewModel(Catalog, State, Preferences, pricing, Navigation, Confirmation, Localizer);
     }
 
     public PcbCatalog Catalog { get; }
@@ -36,6 +37,8 @@ internal sealed class TestScreens
 
     public QuoteViewModel Quote { get; }
 
+    public OrderViewModel Order { get; }
+
     /// <summary>
     /// Enters the only required value the defaults lack and saves, which opens Quote.
     /// </summary>
@@ -45,14 +48,27 @@ internal sealed class TestScreens
         Preferences.SaveAndContinueCommand.Execute(null);
         Assert.Equal(WorkflowStep.Quote, Navigation.CurrentStep);
     }
+
+    /// <summary>
+    /// Completes Preferences and Quote, which opens Order.
+    /// </summary>
+    public void CompleteQuote()
+    {
+        CompletePreferences();
+        Quote.ContinueToOrderCommand.Execute(null);
+        Assert.Equal(WorkflowStep.Order, Navigation.CurrentStep);
+    }
 }
 
 /// <summary>
-/// Records confirmation requests and answers them with <see cref="Answer"/>.
+/// Records confirmation requests and answers them with <see cref="Answer"/>, or, for an asynchronous request while
+/// <see cref="PendingAnswer"/> is set, when the test completes it.
 /// </summary>
 internal sealed class FakeConfirmationService : IConfirmationService
 {
     public bool Answer { get; set; } = true;
+
+    public TaskCompletionSource<bool>? PendingAnswer { get; set; }
 
     public List<(string Title, string Message)> Requests { get; } = [];
 
@@ -60,6 +76,12 @@ internal sealed class FakeConfirmationService : IConfirmationService
     {
         Requests.Add((title, message));
         return Answer;
+    }
+
+    public Task<bool> ConfirmAsync(string title, string message)
+    {
+        Requests.Add((title, message));
+        return PendingAnswer?.Task ?? Task.FromResult(Answer);
     }
 }
 

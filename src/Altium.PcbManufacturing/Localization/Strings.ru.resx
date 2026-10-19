@@ -138,9 +138,6 @@
   <data name="Tab_Order" xml:space="preserve">
     <value>Заказ</value>
   </data>
-  <data name="Placeholder_Order" xml:space="preserve">
-    <value>Вкладка «Заказ» появится на следующем этапе.</value>
-  </data>
   <data name="Preferences_ProjectBasics" xml:space="preserve">
     <value>Основные сведения</value>
   </data>
@@ -362,5 +359,44 @@
   </data>
   <data name="Boards_Format" xml:space="preserve">
     <value>{0} шт.</value>
+  </data>
+  <data name="Order_Summary" xml:space="preserve">
+    <value>Сводка заказа</value>
+  </data>
+  <data name="Order_ReviewHint" xml:space="preserve">
+    <value>Проверьте данные перед оформлением заказа. Чтобы изменить их, вернитесь к параметрам.</value>
+  </data>
+  <data name="Order_DeliveryPostcode" xml:space="preserve">
+    <value>Индекс доставки</value>
+  </data>
+  <data name="Order_SizeAndLayers" xml:space="preserve">
+    <value>Размер и слои</value>
+  </data>
+  <data name="Order_ConfirmTitle" xml:space="preserve">
+    <value>Оформление заказа</value>
+  </data>
+  <data name="Order_ConfirmQuestion" xml:space="preserve">
+    <value>Оформить этот заказ?</value>
+  </data>
+  <data name="Order_PlacedTitle" xml:space="preserve">
+    <value>Заказ подтверждён</value>
+  </data>
+  <data name="Order_PlacedMessage" xml:space="preserve">
+    <value>Заказ подтверждён в этом приложении. Производителю он не отправлялся.</value>
+  </data>
+  <data name="Actions_BackToQuote" xml:space="preserve">
+    <value>Назад к расчёту</value>
+  </data>
+  <data name="Actions_PlaceOrder" xml:space="preserve">
+    <value>Оформить заказ</value>
+  </data>
+  <data name="Actions_NewOrder" xml:space="preserve">
+    <value>Новый заказ</value>
+  </data>
+  <data name="Pricing_SurchargePerBoard" xml:space="preserve">
+    <value>+{0} за плату</value>
+  </data>
+  <data name="Workflow_OrderCompleted" xml:space="preserve">
+    <value>Заказ оформлен. Чтобы внести изменения, создайте новый заказ.</value>
   </data>
 </root>

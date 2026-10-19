@@ -57,6 +57,31 @@ public sealed class WorkflowTabControlTests
         Assert.Equal(WorkflowStep.Preferences, state.CurrentStep);
     });
 
+    [Fact]
+    public void CompletedOrder_KeepsTheSelectionOnOrderUntilReset() => Sta.Run(() =>
+    {
+        (TabControl tabs, WorkflowNavigationState state) = CreateBoundTabs();
+        state.CompleteStep(WorkflowStep.Preferences);
+        state.CompleteStep(WorkflowStep.Quote);
+
+        state.CompleteStep(WorkflowStep.Order);
+        tabs.SelectedIndex = 0;
+        Assert.Equal(2, tabs.SelectedIndex);
+        tabs.SelectedIndex = 1;
+        Assert.Equal(2, tabs.SelectedIndex);
+        Assert.False(((TabItem)tabs.Items[0]).IsEnabled);
+        Assert.False(((TabItem)tabs.Items[1]).IsEnabled);
+
+        state.Reset();
+
+        Assert.Equal(0, tabs.SelectedIndex);
+        Assert.True(((TabItem)tabs.Items[0]).IsEnabled);
+        Assert.False(((TabItem)tabs.Items[1]).IsEnabled);
+        Assert.False(((TabItem)tabs.Items[2]).IsEnabled);
+        tabs.SelectedIndex = 2;
+        Assert.Equal(0, tabs.SelectedIndex);
+    });
+
     private static (TabControl Tabs, WorkflowNavigationState State) CreateBoundTabs()
     {
         WorkflowNavigationState state = new();
@@ -70,6 +95,7 @@ public sealed class WorkflowTabControlTests
             Mode = BindingMode.TwoWay,
         });
         // As in MainWindow.xaml: a tab is enabled only while its step is available.
+        ((TabItem)tabs.Items[0]).SetBinding(UIElement.IsEnabledProperty, new Binding(nameof(WorkflowNavigationState.IsPreferencesAvailable)) { Source = state });
         ((TabItem)tabs.Items[1]).SetBinding(UIElement.IsEnabledProperty, new Binding(nameof(WorkflowNavigationState.IsQuoteAvailable)) { Source = state });
         ((TabItem)tabs.Items[2]).SetBinding(UIElement.IsEnabledProperty, new Binding(nameof(WorkflowNavigationState.IsOrderAvailable)) { Source = state });
         SelectionFollowsSourceBehavior.SetIsEnabled(tabs, true);

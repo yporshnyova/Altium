@@ -1,4 +1,5 @@
 using Altium.PcbManufacturing.Models;
+using Altium.PcbManufacturing.Services;
 using Altium.PcbManufacturing.ViewModels;
 
 namespace Altium.PcbManufacturing.Tests;
@@ -55,6 +56,27 @@ public sealed class PreferencesViewModelTests
         Assert.Equal("12 days", ViewModel.EstimatedProductionTimeText);
         Assert.Contains(nameof(PreferencesViewModel.EstimatedUnitPriceText), changed);
         Assert.Contains(nameof(PreferencesViewModel.EstimatedTotalPriceText), changed);
+    }
+
+    // The indicator beside the material selector, for every material of the shipped catalog ($149.00 base price):
+    // the selected material's unit price minus the base price, per board.
+    [Theory]
+    [InlineData(0, "Included", "$149.00")]
+    [InlineData(1, "+$37.25 / board", "$186.25")]
+    [InlineData(2, "+$208.60 / board", "$357.60")]
+    public async Task MaterialSurcharge_ShowsTheExtraCostPerBoardOfTheSelectedMaterial(int material, string surcharge, string unitPrice)
+    {
+        TestScreens shipped = new(await new PcbCatalogLoader(PcbCatalogLoader.DefaultCatalogPath).LoadAsync(TestContext.Current.CancellationToken));
+        List<string?> changed = [];
+        shipped.Preferences.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+        shipped.Preferences.SelectedMaterial = shipped.Catalog.Materials[material];
+
+        Assert.Equal(surcharge, shipped.Preferences.MaterialSurchargeText);
+        Assert.Equal(unitPrice, shipped.Preferences.EstimatedUnitPriceText);
+        Assert.Equal(unitPrice, shipped.Quote.EstimatedUnitPriceText);
+        Assert.Equal(unitPrice, shipped.Order.EstimatedUnitPriceText);
+        Assert.Equal(material != 0, changed.Contains(nameof(PreferencesViewModel.MaterialSurchargeText)));
     }
 
     [Fact]

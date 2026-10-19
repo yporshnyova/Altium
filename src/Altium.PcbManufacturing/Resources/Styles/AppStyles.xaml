@@ -1,4 +1,4 @@
-<!--
+﻿<!--
     Shared styles. All colours come from the theme palette (Resources/Themes) through DynamicResource, so switching the
     theme restyles everything at runtime. Controls whose stock Windows templates hard-code light colours (ComboBox,
     TabControl, ScrollBar, TextBox, ToolTip) get minimal templates here.
@@ -176,14 +176,6 @@
         TargetType="TextBlock">
         <Setter Property="FontSize" Value="20" />
         <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
-    </Style>
-
-    <Style x:Key="PlaceholderTextStyle" TargetType="TextBlock">
-        <Setter Property="HorizontalAlignment" Value="Center" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-        <Setter Property="TextWrapping" Value="Wrap" />
-        <Setter Property="TextAlignment" Value="Center" />
     </Style>
 
     <!--  TextBox: themed surface, caret and selection; hover and keyboard focus are shown on the border.  -->
@@ -609,7 +601,10 @@
         </Setter>
     </Style>
 
-    <ToolTip x:Key="StepUnavailableToolTip" x:Shared="False" Content="{loc:Text Workflow_StepLocked}">
+    <ToolTip
+        x:Key="StepUnavailableToolTip"
+        x:Shared="False"
+        Content="{loc:Text Workflow_StepLocked}">
         <ToolTip.Style>
             <Style BasedOn="{StaticResource {x:Type ToolTip}}" TargetType="ToolTip">
                 <Style.Triggers>
@@ -639,9 +634,7 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="4"
                         SnapsToDevicePixels="True">
-                        <ContentPresenter
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center" />
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">

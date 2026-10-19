@@ -70,6 +70,105 @@ namespace Altium.PcbManufacturing.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Back to Quote.
+        /// </summary>
+        public static string Actions_BackToQuote {
+            get {
+                return ResourceManager.GetString("Actions_BackToQuote", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to New Order.
+        /// </summary>
+        public static string Actions_NewOrder {
+            get {
+                return ResourceManager.GetString("Actions_NewOrder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Place Order.
+        /// </summary>
+        public static string Actions_PlaceOrder {
+            get {
+                return ResourceManager.GetString("Actions_PlaceOrder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Place this order?.
+        /// </summary>
+        public static string Order_ConfirmQuestion {
+            get {
+                return ResourceManager.GetString("Order_ConfirmQuestion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Place Order.
+        /// </summary>
+        public static string Order_ConfirmTitle {
+            get {
+                return ResourceManager.GetString("Order_ConfirmTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Delivery postcode.
+        /// </summary>
+        public static string Order_DeliveryPostcode {
+            get {
+                return ResourceManager.GetString("Order_DeliveryPostcode", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Your order has been confirmed in this application. It has not been sent to a manufacturer..
+        /// </summary>
+        public static string Order_PlacedMessage {
+            get {
+                return ResourceManager.GetString("Order_PlacedMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Order confirmed.
+        /// </summary>
+        public static string Order_PlacedTitle {
+            get {
+                return ResourceManager.GetString("Order_PlacedTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Check the details below before placing the order. To change them, go back to Preferences..
+        /// </summary>
+        public static string Order_ReviewHint {
+            get {
+                return ResourceManager.GetString("Order_ReviewHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Size and layers.
+        /// </summary>
+        public static string Order_SizeAndLayers {
+            get {
+                return ResourceManager.GetString("Order_SizeAndLayers", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Order summary.
+        /// </summary>
+        public static string Order_Summary {
+            get {
+                return ResourceManager.GetString("Order_Summary", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Continue to Order.
         /// </summary>
         public static string Actions_ContinueToOrder {
@@ -174,15 +273,6 @@ namespace Altium.PcbManufacturing.Localization {
         public static string Layers_Format {
             get {
                 return ResourceManager.GetString("Layers_Format", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The Order tab will be available in a later phase..
-        /// </summary>
-        public static string Placeholder_Order {
-            get {
-                return ResourceManager.GetString("Placeholder_Order", resourceCulture);
             }
         }
         
@@ -302,7 +392,16 @@ namespace Altium.PcbManufacturing.Localization {
                 return ResourceManager.GetString("Pricing_Included", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to +{0} / board.
+        /// </summary>
+        public static string Pricing_SurchargePerBoard {
+            get {
+                return ResourceManager.GetString("Pricing_SurchargePerBoard", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Board specifications.
         /// </summary>
@@ -789,6 +888,15 @@ namespace Altium.PcbManufacturing.Localization {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to The order is complete. Start a new order to make changes..
+        /// </summary>
+        public static string Workflow_OrderCompleted {
+            get {
+                return ResourceManager.GetString("Workflow_OrderCompleted", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Complete the previous step to continue..
         /// </summary>

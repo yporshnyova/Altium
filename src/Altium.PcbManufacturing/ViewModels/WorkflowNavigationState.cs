@@ -18,8 +18,10 @@ public enum WorkflowStep
 /// </summary>
 /// <remarks>
 /// <para>
-/// <see cref="HighestUnlockedStep"/> is the only stored progress: a step is <em>unlocked</em> when it is at or before it
-/// and <em>completed</em> when it is before it. Unlocking is permanent; it is what the completion indicators show.
+/// <see cref="HighestUnlockedStep"/> and <see cref="IsOrderCompleted"/> are the only stored progress: a step is
+/// <em>unlocked</em> when it is at or before <see cref="HighestUnlockedStep"/> and <em>completed</em> when it is before it,
+/// or, for Order, once the order has been placed. Unlocking is permanent until <see cref="Reset"/>; it is what the
+/// completion indicators show.
 /// </para>
 /// <para>
 /// A step is <em>available</em> when it is unlocked and every earlier step is currently <em>ready</em>, as reported by
@@ -38,7 +40,7 @@ public sealed class WorkflowNavigationState : ObservableObject
     private readonly Dictionary<WorkflowStep, Func<bool>> readinessChecks = [];
     private WorkflowStep currentStep = WorkflowStep.Preferences;
 
-    // Last published availability, kept only to raise notifications when it actually changes.
+    private bool isPreferencesAvailable = true;
     private bool isQuoteAvailable;
     private bool isOrderAvailable;
 
@@ -54,10 +56,9 @@ public sealed class WorkflowNavigationState : ObservableObject
         }
     }
 
-    /// <summary>
-    /// The furthest step the user has reached.
-    /// </summary>
     public WorkflowStep HighestUnlockedStep { get; private set; } = WorkflowStep.Preferences;
+
+    public bool IsOrderCompleted { get; private set; }
 
     public bool IsPreferencesCompleted => IsCompleted(WorkflowStep.Preferences);
 
@@ -66,6 +67,11 @@ public sealed class WorkflowNavigationState : ObservableObject
     public bool IsQuoteCompleted => IsCompleted(WorkflowStep.Quote);
 
     public bool IsOrderUnlocked => IsUnlocked(WorkflowStep.Order);
+
+    /// <summary>
+    /// Whether the Preferences tab can be opened now: always, until the order is completed.
+    /// </summary>
+    public bool IsPreferencesAvailable => IsAvailable(WorkflowStep.Preferences);
 
     /// <summary>
     /// Whether the Quote tab can be opened now: unlocked, and Preferences currently ready.
@@ -79,13 +85,19 @@ public sealed class WorkflowNavigationState : ObservableObject
 
     public bool IsUnlocked(WorkflowStep step) => step <= HighestUnlockedStep;
 
-    public bool IsCompleted(WorkflowStep step) => step < HighestUnlockedStep;
+    public bool IsCompleted(WorkflowStep step) => step < HighestUnlockedStep || (step == WorkflowStep.Order && IsOrderCompleted);
 
     /// <summary>
-    /// Whether <paramref name="step"/> can be opened now. Preferences, the first step, is always available.
+    /// Whether <paramref name="step"/> can be opened now. Preferences, the first step, is always available until the
+    /// order is completed; after that only Order is.
     /// </summary>
     public bool IsAvailable(WorkflowStep step)
     {
+        if (IsOrderCompleted)
+        {
+            return step == WorkflowStep.Order;
+        }
+
         if (!IsUnlocked(step))
         {
             return false;
@@ -119,6 +131,13 @@ public sealed class WorkflowNavigationState : ObservableObject
     /// </summary>
     public void RefreshAvailability()
     {
+        bool preferences = IsPreferencesAvailable;
+        if (preferences != isPreferencesAvailable)
+        {
+            isPreferencesAvailable = preferences;
+            OnPropertyChanged(nameof(IsPreferencesAvailable));
+        }
+
         bool quote = IsQuoteAvailable;
         if (quote != isQuoteAvailable)
         {
@@ -155,8 +174,9 @@ public sealed class WorkflowNavigationState : ObservableObject
     }
 
     /// <summary>
-    /// Marks <paramref name="step"/> as completed: unlocks the next step and makes it current. The caller is the step's
-    /// own view model, which has just validated it explicitly (showing any errors).
+    /// Marks <paramref name="step"/> as completed: unlocks the next step and makes it current, or, for Order, completes
+    /// the workflow. The caller is the step's own view model, which has just validated it explicitly (showing any errors)
+    /// and, for Order, had the order confirmed. Nothing changes once the order is completed.
     /// </summary>
     /// <exception cref="InvalidOperationException"><paramref name="step"/> is still locked.</exception>
     public void CompleteStep(WorkflowStep step)
@@ -166,8 +186,17 @@ public sealed class WorkflowNavigationState : ObservableObject
             throw new InvalidOperationException($"The {step} step is locked and cannot be completed.");
         }
 
+        if (IsOrderCompleted)
+        {
+            return;
+        }
+
         if (step == WorkflowStep.Order)
         {
+            IsOrderCompleted = true;
+            OnPropertyChanged(nameof(IsOrderCompleted));
+            SetCurrentStep(WorkflowStep.Order);
+            RefreshAvailability();
             return;
         }
 
@@ -175,15 +204,32 @@ public sealed class WorkflowNavigationState : ObservableObject
         if (next > HighestUnlockedStep)
         {
             HighestUnlockedStep = next;
-            OnPropertyChanged(nameof(HighestUnlockedStep));
-            OnPropertyChanged(nameof(IsPreferencesCompleted));
-            OnPropertyChanged(nameof(IsQuoteUnlocked));
-            OnPropertyChanged(nameof(IsQuoteCompleted));
-            OnPropertyChanged(nameof(IsOrderUnlocked));
-            RefreshAvailability();
+            OnProgressChanged();
         }
 
         SetCurrentStep(next);
+    }
+
+    /// <summary>
+    /// Starts a new workflow: only Preferences is unlocked, and it is current.
+    /// </summary>
+    public void Reset()
+    {
+        HighestUnlockedStep = WorkflowStep.Preferences;
+        IsOrderCompleted = false;
+        OnPropertyChanged(nameof(IsOrderCompleted));
+        OnProgressChanged();
+        SetCurrentStep(WorkflowStep.Preferences);
+    }
+
+    private void OnProgressChanged()
+    {
+        OnPropertyChanged(nameof(HighestUnlockedStep));
+        OnPropertyChanged(nameof(IsPreferencesCompleted));
+        OnPropertyChanged(nameof(IsQuoteUnlocked));
+        OnPropertyChanged(nameof(IsQuoteCompleted));
+        OnPropertyChanged(nameof(IsOrderUnlocked));
+        RefreshAvailability();
     }
 
     private void SetCurrentStep(WorkflowStep step)

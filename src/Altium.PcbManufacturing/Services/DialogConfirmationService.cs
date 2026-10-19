@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Threading;
 using Altium.PcbManufacturing.Views.Dialogs;
 
 namespace Altium.PcbManufacturing.Services;
@@ -16,5 +17,11 @@ public sealed class DialogConfirmationService : IConfirmationService
         };
 
         return dialog.ShowDialog() == true;
+    }
+
+    public async Task<bool> ConfirmAsync(string title, string message)
+    {
+        Dispatcher dispatcher = Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
+        return await dispatcher.InvokeAsync(() => Confirm(title, message));
     }
 }

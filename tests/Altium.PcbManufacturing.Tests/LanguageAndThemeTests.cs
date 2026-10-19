@@ -31,7 +31,7 @@ public sealed class LanguageAndThemeTests : IDisposable
     public LanguageAndThemeTests()
     {
         store = new UiSettingsStore(settingsPath);
-        mainWindow = new MainWindowViewModel(screens.Preferences, screens.Quote, screens.Navigation, screens.Localizer, theme, store);
+        mainWindow = new MainWindowViewModel(screens.Preferences, screens.Quote, screens.Order, screens.Navigation, screens.Localizer, theme, store);
     }
 
     public void Dispose()
@@ -78,11 +78,15 @@ public sealed class LanguageAndThemeTests : IDisposable
         screens.Localizer.SetLanguage(AppLanguage.Russian);
 
         Assert.Equal("2 шт.", screens.Preferences.QuantityText);
+        Assert.Equal("+$223.50 за плату", screens.Preferences.MaterialSurchargeText);
         Assert.Equal("12 дней", screens.Quote.EstimatedProductionTimeText);
         Assert.Equal("$745.00", screens.Quote.EstimatedTotalPriceText);
         Assert.Equal(["Размеры", "Слои", "Покрытие", "Параметры платы"], screens.Quote.ParameterGroups.Select(group => group.Title));
         // Numbers in texts follow the UI language.
         Assert.Equal("1,6 мм", screens.Quote.ParameterGroups.SelectMany(group => group.Parameters).Single(row => row.Label == "Толщина платы").Value);
+        Assert.Equal("2 шт.", screens.Order.QuantityText);
+        Assert.Equal("Зелёный", screens.Order.SolderMaskText);
+        Assert.Equal("$745.00", screens.Order.EstimatedTotalPriceText);
     }
 
     [Fact]
@@ -115,6 +119,23 @@ public sealed class LanguageAndThemeTests : IDisposable
         Assert.Same(screens.Catalog.Materials[1], screens.State.SelectedMaterial);
         Assert.Equal("$372.50", screens.Preferences.EstimatedUnitPriceText);
         Assert.False(screens.Preferences.HasErrors);
+    }
+
+    [Fact]
+    public async Task NewOrder_KeepsTheLanguageAndTheme()
+    {
+        mainWindow.SelectedLanguage = Localizer.SupportedLanguages[1];
+        mainWindow.ToggleThemeCommand.Execute(null);
+        screens.CompleteQuote();
+        await screens.Order.PlaceOrderCommand.ExecuteAsync(null);
+
+        screens.Order.NewOrderCommand.Execute(null);
+
+        Assert.Equal(AppLanguage.Russian, screens.Localizer.Language);
+        Assert.Equal(AppTheme.Light, theme.Theme);
+        Assert.Equal([AppTheme.Light], theme.Applied);
+        Assert.Equal(new UiSettings(AppLanguage.Russian, AppTheme.Light), store.Load());
+        Assert.Equal("10 шт.", screens.Order.QuantityText);
     }
 
     private IEnumerable<string?> Errors(string propertyName) =>

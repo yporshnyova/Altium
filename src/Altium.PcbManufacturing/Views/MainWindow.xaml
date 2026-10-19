@@ -85,18 +85,34 @@
 
         <!--
             The selected tab is the workflow step: each TabItem's Tag is its step, selected through SelectedValue. The
-            workflow state decides: a tab is enabled only while its step is available (unlocked, and Preferences valid),
-            and SelectionFollowsSourceBehavior returns the selection to the current step if the state refuses a change.
+            workflow state decides: a tab is enabled only while its step is available (unlocked, Preferences valid, and
+            the order not yet completed), and SelectionFollowsSourceBehavior returns the selection to the current step
+            if the state refuses a change.
         -->
         <TabControl
             Margin="12,12,12,12"
             behaviors:SelectionFollowsSourceBehavior.IsEnabled="True"
             SelectedValue="{Binding NavigationState.CurrentStep, Mode=TwoWay}"
             SelectedValuePath="Tag">
+            <TabControl.Resources>
+                <Style
+                    x:Key="EditableStepTabItemStyle"
+                    BasedOn="{StaticResource {x:Type TabItem}}"
+                    TargetType="TabItem">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding NavigationState.IsOrderCompleted}" Value="True">
+                            <Setter Property="ToolTip" Value="{loc:Text Workflow_OrderCompleted}" />
+                            <Setter Property="AutomationProperties.HelpText" Value="{loc:Text Workflow_OrderCompleted}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TabControl.Resources>
             <!--  The view is resolved from Resources/Templates/Mappings.xaml.  -->
             <TabItem
                 AutomationProperties.Name="{loc:Text Tab_Preferences}"
                 Content="{Binding Preferences, Mode=OneTime}"
+                IsEnabled="{Binding NavigationState.IsPreferencesAvailable}"
+                Style="{StaticResource EditableStepTabItemStyle}"
                 Tag="{x:Static vm:WorkflowStep.Preferences}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
@@ -108,8 +124,9 @@
             </TabItem>
             <TabItem
                 AutomationProperties.Name="{loc:Text Tab_Quote}"
-                IsEnabled="{Binding NavigationState.IsQuoteAvailable}"
                 Content="{Binding Quote, Mode=OneTime}"
+                IsEnabled="{Binding NavigationState.IsQuoteAvailable}"
+                Style="{StaticResource EditableStepTabItemStyle}"
                 Tag="{x:Static vm:WorkflowStep.Quote}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
@@ -121,15 +138,16 @@
             </TabItem>
             <TabItem
                 AutomationProperties.Name="{loc:Text Tab_Order}"
+                Content="{Binding Order, Mode=OneTime}"
                 IsEnabled="{Binding NavigationState.IsOrderAvailable}"
                 Tag="{x:Static vm:WorkflowStep.Order}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ClipboardCheckOutline" Style="{StaticResource TabIconStyle}" />
                         <TextBlock VerticalAlignment="Center" Text="{loc:Text Tab_Order}" />
+                        <iconPacks:PackIconMaterial Style="{StaticResource StepCompletedIconStyle}" Tag="{Binding NavigationState.IsOrderCompleted}" />
                     </StackPanel>
                 </TabItem.Header>
-                <TextBlock Style="{StaticResource PlaceholderTextStyle}" Text="{loc:Text Placeholder_Order}" />
             </TabItem>
         </TabControl>
     </DockPanel>
