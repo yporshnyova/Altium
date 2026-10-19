@@ -31,7 +31,7 @@ public sealed class PreferencesViewModelTests
         Assert.Equal("Included", ViewModel.MaterialSurchargePerUnitText);
         Assert.Equal("$149.00", ViewModel.EstimatedUnitPriceText);
         Assert.Equal("$1,490.00", ViewModel.EstimatedTotalPriceText);
-        Assert.Equal("5 d", ViewModel.EstimatedProductionTimeText);
+        Assert.Equal("5 days", ViewModel.EstimatedProductionTimeText);
         // The empty postcode is not reported until it is edited or Save is clicked.
         Assert.False(ViewModel.HasErrors);
     }
@@ -51,8 +51,8 @@ public sealed class PreferencesViewModelTests
         Assert.Equal("+$223.50", ViewModel.MaterialSurchargePerUnitText);
         Assert.Equal("$372.50", ViewModel.EstimatedUnitPriceText);
         Assert.Equal("$1,117.50", ViewModel.EstimatedTotalPriceText);
-        Assert.Equal("3 pcs", ViewModel.QuantityText);
-        Assert.Equal("12 d", ViewModel.EstimatedProductionTimeText);
+        Assert.Equal("3 pcs.", ViewModel.QuantityText);
+        Assert.Equal("12 days", ViewModel.EstimatedProductionTimeText);
         Assert.Contains(nameof(PreferencesViewModel.EstimatedUnitPriceText), changed);
         Assert.Contains(nameof(PreferencesViewModel.EstimatedTotalPriceText), changed);
     }

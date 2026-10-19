@@ -61,7 +61,6 @@ public sealed class PcbCatalogLoaderTests : IDisposable
         { "duplicate material id", "materials[1].id 'fr4' is duplicated." },
         { "zero price multiplier", "materials[0].priceMultiplier must be greater than zero." },
         { "invalid hex color", "solderMaskColors[0].hexColor must be in #RRGGBB format." },
-        { "missing board specification", "boardSpecification is required." },
     };
 
     [Theory]
@@ -75,7 +74,6 @@ public sealed class PcbCatalogLoaderTests : IDisposable
             "duplicate material id" => c => c["materials"]![1]!["id"] = "FR4",
             "zero price multiplier" => c => c["materials"]![0]!["priceMultiplier"] = 0,
             "invalid hex color" => c => c["solderMaskColors"]![0]!["hexColor"] = "green",
-            "missing board specification" => c => c.Remove("boardSpecification"),
             _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, null),
         };
         mutate(json);

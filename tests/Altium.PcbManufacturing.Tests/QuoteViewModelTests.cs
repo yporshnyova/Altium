@@ -23,7 +23,7 @@ public sealed class QuoteViewModelTests
         Assert.Equal(
             [
                 ("Size", "120 × 60 mm"),
-                ("Quantity", "10 pcs"),
+                ("Quantity", "10 pcs."),
                 ("Copper layers", "4 layers"),
                 ("Copper weight", "2 oz"),
                 ("Surface finish", "ENIG"),
@@ -43,7 +43,7 @@ public sealed class QuoteViewModelTests
         Assert.Equal("Included", ViewModel.MaterialSurchargePerUnitText);
         Assert.Equal("$149.00", ViewModel.EstimatedUnitPriceText);
         Assert.Equal("$1,490.00", ViewModel.EstimatedTotalPriceText);
-        Assert.Equal("5 d", ViewModel.EstimatedProductionTimeText);
+        Assert.Equal("5 days", ViewModel.EstimatedProductionTimeText);
     }
 
     [Fact]
@@ -60,9 +60,9 @@ public sealed class QuoteViewModelTests
         // Rogers: 149.00 × 2.5 = 372.50 per board, 12 days; × 4 boards.
         Assert.Equal(new PriceEstimate(149.00m, 223.50m, 372.50m, 4, 1490.00m), ViewModel.PriceEstimate);
         Assert.Equal("$1,490.00", ViewModel.EstimatedTotalPriceText);
-        Assert.Equal("12 d", ViewModel.EstimatedProductionTimeText);
+        Assert.Equal("12 days", ViewModel.EstimatedProductionTimeText);
         Assert.Equal("Rogers", Row("Material").Value);
-        Assert.Equal("4 pcs", Row("Quantity").Value);
+        Assert.Equal("4 pcs.", Row("Quantity").Value);
         Assert.Equal("0.8 mm", Row("Board thickness").Value);
         Assert.Equal("#000000", Row("Solder mask").SwatchHexColor);
         Assert.Equal("#000000", ViewModel.SolderMaskHexColor);
@@ -88,7 +88,7 @@ public sealed class QuoteViewModelTests
     {
         screens.Preferences.QuantityInput = "0";
 
-        Assert.Equal("10 pcs", Row("Quantity").Value);
+        Assert.Equal("10 pcs.", Row("Quantity").Value);
         Assert.Equal("$1,490.00", ViewModel.EstimatedTotalPriceText);
     }
 
