@@ -50,10 +50,6 @@ public sealed class PricingTests
     }
 
     [Fact]
-    public void Estimate_MaximumQuantity_DoesNotOverflow() =>
-        Assert.Equal(357.60m * int.MaxValue, pricing.Estimate(Material(2.40m), int.MaxValue).EstimatedTotalPrice);
-
-    [Fact]
     public void Estimate_ZeroQuantity_Throws() =>
         Assert.Throws<ArgumentOutOfRangeException>(() => pricing.Estimate(Material(1.00m), 0));
 

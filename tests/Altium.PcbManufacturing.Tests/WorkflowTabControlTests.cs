@@ -8,8 +8,9 @@ using Altium.PcbManufacturing.Views.Behaviors;
 namespace Altium.PcbManufacturing.Tests;
 
 /// <summary>
-/// A live WPF TabControl bound to <see cref="WorkflowNavigationState"/> the way MainWindow binds it: the selection must
-/// follow the workflow and snap back when a request is refused, and each tab is enabled only while it is available.
+/// A live WPF TabControl bound to <see cref="OrderWizardViewModel"/> the way MainWindow binds it: tab navigation obeys
+/// the same coordinator rules as the footer, the selection snaps back when a request is refused, and each tab is
+/// enabled only while its step is available.
 /// </summary>
 /// <remarks>Not shown on screen: covers binding and selection logic, not mouse, keyboard or rendering.</remarks>
 public sealed class WorkflowTabControlTests
@@ -17,54 +18,20 @@ public sealed class WorkflowTabControlTests
     [Fact]
     public void SelectingALockedTab_SnapsBackToTheCurrentStep() => Sta.Run(() =>
     {
-        (TabControl tabs, WorkflowNavigationState state) = CreateBoundTabs();
+        (TabControl tabs, TestWizard wizard) = CreateBoundTabs();
 
         tabs.SelectedIndex = 1;
 
-        Assert.Equal(WorkflowStep.Preferences, state.CurrentStep);
+        Assert.Equal(WorkflowStep.Preferences, wizard.Wizard.CurrentStep);
         Assert.Equal(0, tabs.SelectedIndex);
     });
 
     [Fact]
-    public void CompletingPreferences_SelectsQuoteAndBackNavigationWorks() => Sta.Run(() =>
+    public void CompletedOrder_KeepsTheSelectionOnOrderUntilNewOrder() => Sta.Run(() =>
     {
-        (TabControl tabs, WorkflowNavigationState state) = CreateBoundTabs();
+        (TabControl tabs, TestWizard wizard) = CreateBoundTabs();
+        wizard.CompleteOrderAsync().GetAwaiter().GetResult();
 
-        state.CompleteStep(WorkflowStep.Preferences);
-        Assert.Equal(1, tabs.SelectedIndex);
-
-        tabs.SelectedIndex = 0;
-        Assert.Equal(WorkflowStep.Preferences, state.CurrentStep);
-    });
-
-    [Fact]
-    public void UnavailableQuoteTab_IsDisabledAndCannotBeSelected() => Sta.Run(() =>
-    {
-        (TabControl tabs, WorkflowNavigationState state) = CreateBoundTabs();
-        var quote = (TabItem)tabs.Items[1];
-        bool preferencesReady = true;
-        state.SetReadinessCheck(WorkflowStep.Preferences, () => preferencesReady);
-        state.CompleteStep(WorkflowStep.Preferences);
-        tabs.SelectedIndex = 0;
-        Assert.True(quote.IsEnabled);
-
-        preferencesReady = false;
-        state.RefreshAvailability();
-        tabs.SelectedIndex = 1;
-
-        Assert.False(quote.IsEnabled);
-        Assert.Equal(0, tabs.SelectedIndex);
-        Assert.Equal(WorkflowStep.Preferences, state.CurrentStep);
-    });
-
-    [Fact]
-    public void CompletedOrder_KeepsTheSelectionOnOrderUntilReset() => Sta.Run(() =>
-    {
-        (TabControl tabs, WorkflowNavigationState state) = CreateBoundTabs();
-        state.CompleteStep(WorkflowStep.Preferences);
-        state.CompleteStep(WorkflowStep.Quote);
-
-        state.CompleteStep(WorkflowStep.Order);
         tabs.SelectedIndex = 0;
         Assert.Equal(2, tabs.SelectedIndex);
         tabs.SelectedIndex = 1;
@@ -72,7 +39,7 @@ public sealed class WorkflowTabControlTests
         Assert.False(((TabItem)tabs.Items[0]).IsEnabled);
         Assert.False(((TabItem)tabs.Items[1]).IsEnabled);
 
-        state.Reset();
+        wizard.Wizard.StartNewOrder();
 
         Assert.Equal(0, tabs.SelectedIndex);
         Assert.True(((TabItem)tabs.Items[0]).IsEnabled);
@@ -82,23 +49,24 @@ public sealed class WorkflowTabControlTests
         Assert.Equal(0, tabs.SelectedIndex);
     });
 
-    private static (TabControl Tabs, WorkflowNavigationState State) CreateBoundTabs()
+    private static (TabControl Tabs, TestWizard Wizard) CreateBoundTabs()
     {
-        WorkflowNavigationState state = new();
+        TestWizard wizard = new();
+        OrderWizardViewModel source = wizard.Wizard;
         TabControl tabs = new() { SelectedValuePath = nameof(TabItem.Tag) };
         tabs.Items.Add(new TabItem { Tag = WorkflowStep.Preferences });
         tabs.Items.Add(new TabItem { Tag = WorkflowStep.Quote });
         tabs.Items.Add(new TabItem { Tag = WorkflowStep.Order });
-        tabs.SetBinding(Selector.SelectedValueProperty, new Binding(nameof(WorkflowNavigationState.CurrentStep))
+        tabs.SetBinding(Selector.SelectedValueProperty, new Binding(nameof(OrderWizardViewModel.CurrentStep))
         {
-            Source = state,
+            Source = source,
             Mode = BindingMode.TwoWay,
         });
         // As in MainWindow.xaml: a tab is enabled only while its step is available.
-        ((TabItem)tabs.Items[0]).SetBinding(UIElement.IsEnabledProperty, new Binding(nameof(WorkflowNavigationState.IsPreferencesAvailable)) { Source = state });
-        ((TabItem)tabs.Items[1]).SetBinding(UIElement.IsEnabledProperty, new Binding(nameof(WorkflowNavigationState.IsQuoteAvailable)) { Source = state });
-        ((TabItem)tabs.Items[2]).SetBinding(UIElement.IsEnabledProperty, new Binding(nameof(WorkflowNavigationState.IsOrderAvailable)) { Source = state });
+        ((TabItem)tabs.Items[0]).SetBinding(UIElement.IsEnabledProperty, new Binding(nameof(OrderWizardViewModel.IsPreferencesAvailable)) { Source = source });
+        ((TabItem)tabs.Items[1]).SetBinding(UIElement.IsEnabledProperty, new Binding(nameof(OrderWizardViewModel.IsQuoteAvailable)) { Source = source });
+        ((TabItem)tabs.Items[2]).SetBinding(UIElement.IsEnabledProperty, new Binding(nameof(OrderWizardViewModel.IsOrderAvailable)) { Source = source });
         SelectionFollowsSourceBehavior.SetIsEnabled(tabs, true);
-        return (tabs, state);
+        return (tabs, wizard);
     }
 }

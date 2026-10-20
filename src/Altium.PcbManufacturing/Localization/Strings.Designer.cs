@@ -340,7 +340,7 @@ namespace Altium.PcbManufacturing.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Estimated production time: {0}.
+        ///   Looks up a localized string similar to Estimated production time: {0} days.
         /// </summary>
         public static string Preferences_ProductionTimeHint {
             get {

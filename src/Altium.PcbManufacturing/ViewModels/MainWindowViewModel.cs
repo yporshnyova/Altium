@@ -8,8 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace Altium.PcbManufacturing.ViewModels;
 
 /// <summary>
-/// Root data context of the main window: one view model per tab, the workflow navigation, and the header's language
-/// and theme settings.
+/// Root data context of the main window: the order wizard, and the header's language and theme settings.
 /// </summary>
 public sealed partial class MainWindowViewModel : ObservableObject
 {
@@ -18,39 +17,24 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly UiSettingsStore settingsStore;
 
     public MainWindowViewModel(
-        PreferencesViewModel preferences,
-        QuoteViewModel quote,
-        OrderViewModel order,
-        WorkflowNavigationState navigationState,
+        OrderWizardViewModel wizard,
         Localizer localizer,
         IThemeService themeService,
         UiSettingsStore settingsStore)
     {
-        ArgumentNullException.ThrowIfNull(preferences);
-        ArgumentNullException.ThrowIfNull(quote);
-        ArgumentNullException.ThrowIfNull(order);
-        ArgumentNullException.ThrowIfNull(navigationState);
+        ArgumentNullException.ThrowIfNull(wizard);
         ArgumentNullException.ThrowIfNull(localizer);
         ArgumentNullException.ThrowIfNull(themeService);
         ArgumentNullException.ThrowIfNull(settingsStore);
 
-        Preferences = preferences;
-        Quote = quote;
-        Order = order;
-        NavigationState = navigationState;
+        Wizard = wizard;
         this.localizer = localizer;
         this.themeService = themeService;
         this.settingsStore = settingsStore;
         this.localizer.PropertyChanged += OnLocalizerPropertyChanged;
     }
 
-    public PreferencesViewModel Preferences { get; }
-
-    public QuoteViewModel Quote { get; }
-
-    public OrderViewModel Order { get; }
-
-    public WorkflowNavigationState NavigationState { get; }
+    public OrderWizardViewModel Wizard { get; }
 
     public IReadOnlyList<LanguageOption> Languages => Localizer.SupportedLanguages;
 

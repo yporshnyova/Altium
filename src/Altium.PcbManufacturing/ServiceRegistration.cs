@@ -3,6 +3,7 @@ using Altium.PcbManufacturing.Models;
 using Altium.PcbManufacturing.Services;
 using Altium.PcbManufacturing.Settings;
 using Altium.PcbManufacturing.ViewModels;
+using Altium.PcbManufacturing.ViewModels.Factories;
 using Altium.PcbManufacturing.Views;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,9 +28,7 @@ public static class ServiceRegistration
         ArgumentNullException.ThrowIfNull(themeService);
 
         services.AddSingleton(catalog);
-        services.AddSingleton<ManufacturingPreferences>();
         services.AddSingleton<PcbPricingService>();
-        services.AddSingleton<WorkflowNavigationState>();
         services.AddSingleton<IConfirmationService, DialogConfirmationService>();
 
         // UI-wide services. The localizer instance is the one XAML markup extensions bind to.
@@ -37,14 +36,17 @@ public static class ServiceRegistration
         services.AddSingleton(settingsStore);
         services.AddSingleton(themeService);
 
-        // One main window per application, so its view models share the window's (and the shared state's) lifetime.
+        // One main window per application, so its view models share the window's (and the draft's) lifetime. The
+        // wizard creates each step once through its factory and keeps it; the steps themselves are not registered.
         services.AddSingleton<MainWindow>();
-
         services.AddSingleton<MainWindowViewModel>();
 
-        services.AddSingleton<PreferencesViewModel>();
-        services.AddSingleton<QuoteViewModel>();
-        services.AddSingleton<OrderViewModel>();
+        // The draft is not registered: each wizard creates and owns its own.
+        services.AddSingleton<OrderWizardViewModel>();
+
+        services.AddSingleton<PreferencesViewModelFactory>();
+        services.AddSingleton<QuoteViewModelFactory>();
+        services.AddSingleton<OrderViewModelFactory>();
 
         return services;
     }

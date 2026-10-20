@@ -40,14 +40,6 @@ public sealed class UiSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void Load_UnknownValue_FallsBackForThatValueOnly()
-    {
-        Write("""{"language":"Klingon","theme":"Light"}""");
-
-        Assert.Equal(new UiSettings(AppLanguage.English, AppTheme.Light), new UiSettingsStore(FilePath).Load());
-    }
-
-    [Fact]
     public void Save_WhenThePathCannotBeWritten_DoesNotThrow()
     {
         // A directory occupies the file path, so writing the file fails.

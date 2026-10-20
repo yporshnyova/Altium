@@ -13,9 +13,4 @@ public static class UsdFormat
 
     public static string Format(decimal amount) =>
         amount.ToString(format, usCulture);
-
-    public static string FormatSurcharge(decimal amount, string includedText) =>
-        amount == 0
-            ? includedText
-            : $"+{Format(amount)}";
 }

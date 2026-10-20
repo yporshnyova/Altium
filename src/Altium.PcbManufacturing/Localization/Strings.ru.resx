@@ -163,7 +163,7 @@
     <value>Толщина платы</value>
   </data>
   <data name="Preferences_ProductionTimeHint" xml:space="preserve">
-    <value>Ориентировочный срок изготовления: {0}</value>
+    <value>Ориентировочный срок изготовления: {0} дней</value>
   </data>
   <data name="Preferences_AdditionalDetails" xml:space="preserve">
     <value>Дополнительно</value>

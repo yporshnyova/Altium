@@ -3,11 +3,13 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behaviors="clr-namespace:Altium.PcbManufacturing.Views.Behaviors"
+    xmlns:converters="clr-namespace:Altium.PcbManufacturing.Views.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:loc="clr-namespace:Altium.PcbManufacturing.Views.Markup"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="clr-namespace:Altium.PcbManufacturing.Models"
+    xmlns:validation="clr-namespace:Altium.PcbManufacturing.Validation"
     xmlns:vm="clr-namespace:Altium.PcbManufacturing.ViewModels"
     d:DataContext="{d:DesignInstance Type=vm:PreferencesViewModel}"
     d:DesignHeight="620"
@@ -29,336 +31,36 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <!--  Scrolling content above a footer that stays visible.  -->
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <!--  Scrolling content; the navigation footer (with Reset to Defaults) belongs to the main window.  -->
+    <ScrollViewer
+        Focusable="False"
+        HorizontalScrollBarVisibility="Disabled"
+        VerticalScrollBarVisibility="Auto">
+        <!--  Shared size scope: label and surcharge columns line up across the two form cards.  -->
+        <Grid
+            Margin="{StaticResource PageMargin}"
+            behaviors:FocusFirstInvalidBehavior.Request="{Binding InvalidSubmitCount, Mode=OneWay}"
+            Grid.IsSharedSizeScope="True">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" MinWidth="400" />
+                <ColumnDefinition Width="{StaticResource ColumnGap}" />
+                <ColumnDefinition Width="2*" MinWidth="300" />
+            </Grid.ColumnDefinitions>
 
-        <ScrollViewer
-            Grid.Row="0"
-            Focusable="False"
-            HorizontalScrollBarVisibility="Disabled"
-            VerticalScrollBarVisibility="Auto">
-            <!--  Shared size scope: label and surcharge columns line up across the two form cards.  -->
-            <Grid
-                Margin="{StaticResource PageMargin}"
-                behaviors:FocusFirstInvalidBehavior.Request="{Binding InvalidSubmitCount, Mode=OneWay}"
-                Grid.IsSharedSizeScope="True">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="3*" MinWidth="400" />
-                    <ColumnDefinition Width="{StaticResource ColumnGap}" />
-                    <ColumnDefinition Width="2*" MinWidth="300" />
-                </Grid.ColumnDefinitions>
-
-                <!--  The form cards stack independently of the summary's height.  -->
-                <StackPanel Grid.Column="0">
-                    <!--  Section A: project basics  -->
-                    <Border Margin="{StaticResource CardGapMargin}" Style="{StaticResource CardStyle}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition
-                                    Width="Auto"
-                                    MinWidth="120"
-                                    SharedSizeGroup="FieldLabel" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" SharedSizeGroup="FieldTrailer" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock
-                                Grid.Row="0"
-                                Grid.ColumnSpan="3"
-                                Style="{StaticResource SectionHeaderTextStyle}"
-                                Text="{loc:Text Preferences_ProjectBasics}" />
-
-                            <Label
-                                x:Name="ProjectNameLabel"
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                Content="{loc:Text Preferences_ProjectName}"
-                                Style="{StaticResource FieldLabelStyle}"
-                                Target="{Binding ElementName=ProjectNameTextBox}" />
-                            <TextBox
-                                x:Name="ProjectNameTextBox"
-                                Grid.Row="1"
-                                Grid.Column="1"
-                                AutomationProperties.LabeledBy="{Binding ElementName=ProjectNameLabel}"
-                                MaxLength="{x:Static vm:PreferencesViewModel.ProjectNameMaxLength}"
-                                Style="{StaticResource FieldTextBoxStyle}"
-                                Text="{Binding ProjectName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
-                            <ContentControl
-                                Grid.Row="2"
-                                Grid.Column="1"
-                                Style="{StaticResource ValidationMessageStyle}"
-                                Tag="{Binding ElementName=ProjectNameTextBox}" />
-
-                            <Label
-                                x:Name="PostcodeLabel"
-                                Grid.Row="3"
-                                Grid.Column="0"
-                                Content="{loc:Text Preferences_Postcode}"
-                                Style="{StaticResource FieldLabelStyle}"
-                                Target="{Binding ElementName=PostcodeTextBox}" />
-                            <TextBox
-                                x:Name="PostcodeTextBox"
-                                Grid.Row="3"
-                                Grid.Column="1"
-                                MinWidth="140"
-                                MaxWidth="200"
-                                HorizontalAlignment="Left"
-                                behaviors:PostcodeMaskBehavior.IsEnabled="True"
-                                AutomationProperties.HelpText="{Binding Text, ElementName=PostcodeHint}"
-                                AutomationProperties.LabeledBy="{Binding ElementName=PostcodeLabel}"
-                                Style="{StaticResource FieldTextBoxStyle}"
-                                Text="{Binding Postcode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
-                            <TextBlock
-                                x:Name="PostcodeHint"
-                                Grid.Row="4"
-                                Grid.Column="1"
-                                Style="{StaticResource HintTextStyle}"
-                                Text="{loc:Text Preferences_PostcodeHint}" />
-                            <ContentControl
-                                Grid.Row="5"
-                                Grid.Column="1"
-                                Style="{StaticResource ValidationMessageStyle}"
-                                Tag="{Binding ElementName=PostcodeTextBox}" />
-
-                            <Label
-                                x:Name="QuantityLabel"
-                                Grid.Row="6"
-                                Grid.Column="0"
-                                Content="{loc:Text Preferences_Quantity}"
-                                Style="{StaticResource FieldLabelStyle}"
-                                Target="{Binding ElementName=QuantityTextBox}" />
-                            <!--  Plain text so the input is kept and validated; typing and pasting accept digits only, and only whole numbers reach the shared state.  -->
-                            <TextBox
-                                x:Name="QuantityTextBox"
-                                Grid.Row="6"
-                                Grid.Column="1"
-                                MinWidth="140"
-                                MaxWidth="200"
-                                HorizontalAlignment="Left"
-                                behaviors:DigitsOnlyInputBehavior.IsEnabled="True"
-                                AutomationProperties.LabeledBy="{Binding ElementName=QuantityLabel}"
-                                InputScope="Number"
-                                Style="{StaticResource FieldTextBoxStyle}"
-                                Text="{Binding QuantityInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
-                            <ContentControl
-                                Grid.Row="7"
-                                Grid.Column="1"
-                                Style="{StaticResource ValidationMessageStyle}"
-                                Tag="{Binding ElementName=QuantityTextBox}" />
-                        </Grid>
-                    </Border>
-
-                    <!--  Section B: board preferences  -->
-                    <Border Margin="{StaticResource CardGapMargin}" Style="{StaticResource CardStyle}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition
-                                    Width="Auto"
-                                    MinWidth="120"
-                                    SharedSizeGroup="FieldLabel" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" SharedSizeGroup="FieldTrailer" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock
-                                Grid.Row="0"
-                                Grid.ColumnSpan="3"
-                                Style="{StaticResource SectionHeaderTextStyle}"
-                                Text="{loc:Text Preferences_BoardPreferences}" />
-
-                            <Label
-                                x:Name="MaterialLabel"
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                Content="{loc:Text Preferences_Material}"
-                                Style="{StaticResource FieldLabelStyle}"
-                                Target="{Binding ElementName=MaterialComboBox}" />
-                            <ComboBox
-                                x:Name="MaterialComboBox"
-                                Grid.Row="1"
-                                Grid.Column="1"
-                                AutomationProperties.LabeledBy="{Binding ElementName=MaterialLabel}"
-                                DisplayMemberPath="Name"
-                                ItemsSource="{Binding Materials, Mode=OneTime}"
-                                SelectedItem="{Binding SelectedMaterial, Mode=TwoWay}"
-                                Style="{StaticResource FieldComboBoxStyle}"
-                                TextSearch.TextPath="Name">
-                                <ComboBox.ItemContainerStyle>
-                                    <Style BasedOn="{StaticResource {x:Type ComboBoxItem}}" TargetType="ComboBoxItem">
-                                        <Setter Property="AutomationProperties.Name" Value="{Binding Name, Mode=OneWay}" />
-                                    </Style>
-                                </ComboBox.ItemContainerStyle>
-                            </ComboBox>
-                            <!--  Fixed minimum width keeps the ComboBox from resizing as the surcharge text changes.  -->
-                            <TextBlock
-                                x:Name="MaterialSurchargeText"
-                                Grid.Row="1"
-                                Grid.Column="2"
-                                MinWidth="72"
-                                Style="{StaticResource SurchargeTextStyle}"
-                                Text="{Binding MaterialSurchargeText, Mode=OneWay}" />
-                            <TextBlock
-                                Grid.Row="2"
-                                Grid.Column="1"
-                                Style="{StaticResource HintTextStyle}"
-                                Text="{loc:Format Preferences_ProductionTimeHint,
-                                                  Path=EstimatedProductionTimeText}" />
-
-                            <Label
-                                x:Name="SolderMaskLabel"
-                                Grid.Row="3"
-                                Grid.Column="0"
-                                Content="{loc:Text Preferences_SolderMaskColor}"
-                                Style="{StaticResource FieldLabelStyle}"
-                                Target="{Binding ElementName=SolderMaskComboBox}" />
-                            <ComboBox
-                                x:Name="SolderMaskComboBox"
-                                Grid.Row="3"
-                                Grid.Column="1"
-                                AutomationProperties.LabeledBy="{Binding ElementName=SolderMaskLabel}"
-                                ItemTemplate="{StaticResource SolderMaskColorTemplate}"
-                                ItemsSource="{Binding SolderMaskColors, Mode=OneTime}"
-                                SelectedItem="{Binding SelectedSolderMaskColor, Mode=TwoWay}"
-                                Style="{StaticResource FieldComboBoxStyle}"
-                                TextSearch.TextPath="Name">
-                                <ComboBox.ItemContainerStyle>
-                                    <Style BasedOn="{StaticResource {x:Type ComboBoxItem}}" TargetType="ComboBoxItem">
-                                        <Setter Property="AutomationProperties.Name" Value="{loc:CatalogName SolderMaskColor}" />
-                                    </Style>
-                                </ComboBox.ItemContainerStyle>
-                            </ComboBox>
-
-                            <Label
-                                x:Name="BoardThicknessLabel"
-                                Grid.Row="4"
-                                Grid.Column="0"
-                                Content="{loc:Text Preferences_BoardThickness}"
-                                Style="{StaticResource FieldLabelStyle}"
-                                Target="{Binding ElementName=BoardThicknessComboBox}" />
-                            <ComboBox
-                                x:Name="BoardThicknessComboBox"
-                                Grid.Row="4"
-                                Grid.Column="1"
-                                AutomationProperties.LabeledBy="{Binding ElementName=BoardThicknessLabel}"
-                                ItemTemplate="{StaticResource BoardThicknessTemplate}"
-                                ItemsSource="{Binding BoardThicknesses, Mode=OneTime}"
-                                SelectedItem="{Binding SelectedBoardThickness, Mode=TwoWay}"
-                                Style="{StaticResource FieldComboBoxStyle}">
-                                <ComboBox.ItemContainerStyle>
-                                    <Style BasedOn="{StaticResource {x:Type ComboBoxItem}}" TargetType="ComboBoxItem">
-                                        <Setter Property="AutomationProperties.Name" Value="{loc:Format Thickness_Millimeters, Path=Millimeters}" />
-                                    </Style>
-                                </ComboBox.ItemContainerStyle>
-                            </ComboBox>
-                        </Grid>
-                    </Border>
-
-                    <!--  Section C: optional notes  -->
-                    <Border Style="{StaticResource CardStyle}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition
-                                    Width="Auto"
-                                    MinWidth="120"
-                                    SharedSizeGroup="FieldLabel" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" SharedSizeGroup="FieldTrailer" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock
-                                Grid.Row="0"
-                                Grid.ColumnSpan="3"
-                                Style="{StaticResource SectionHeaderTextStyle}"
-                                Text="{loc:Text Preferences_AdditionalDetails}" />
-
-                            <Label
-                                x:Name="NotesLabel"
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                Margin="0,6,16,14"
-                                VerticalAlignment="Top"
-                                Content="{loc:Text Preferences_Notes}"
-                                Style="{StaticResource FieldLabelStyle}"
-                                Target="{Binding ElementName=NotesTextBox}" />
-                            <!--  Spans to the form's right edge; fixed height with its own scrollbar, so it never grows with its content.  -->
-                            <TextBox
-                                x:Name="NotesTextBox"
-                                Grid.Row="1"
-                                Grid.Column="1"
-                                Grid.ColumnSpan="2"
-                                Height="110"
-                                VerticalContentAlignment="Top"
-                                AcceptsReturn="True"
-                                AutomationProperties.HelpText="{Binding NotesCounterText, Mode=OneWay}"
-                                AutomationProperties.LabeledBy="{Binding ElementName=NotesLabel}"
-                                MaxLength="{x:Static vm:PreferencesViewModel.NotesMaxLength}"
-                                Style="{StaticResource FieldTextBoxStyle}"
-                                Text="{Binding Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
-                                TextWrapping="Wrap"
-                                VerticalScrollBarVisibility="Auto" />
-                            <TextBlock
-                                x:Name="NotesCounter"
-                                Grid.Row="2"
-                                Grid.Column="1"
-                                Grid.ColumnSpan="2"
-                                HorizontalAlignment="Right"
-                                Style="{StaticResource HintTextStyle}"
-                                Text="{Binding NotesCounterText, Mode=OneWay}" />
-                            <ContentControl
-                                Grid.Row="3"
-                                Grid.Column="1"
-                                Grid.ColumnSpan="2"
-                                Style="{StaticResource ValidationMessageStyle}"
-                                Tag="{Binding ElementName=NotesTextBox}" />
-                        </Grid>
-                    </Border>
-                </StackPanel>
-
-                <!--  Summary: every value is bound to the same view model properties as the inputs.  -->
-                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+            <!--  The form cards stack independently of the summary's height.  -->
+            <StackPanel Grid.Column="0">
+                <!--  Section A: project basics  -->
+                <Border Margin="{StaticResource CardGapMargin}" Style="{StaticResource CardStyle}">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition
+                                Width="Auto"
+                                MinWidth="120"
+                                SharedSizeGroup="FieldLabel" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="FieldTrailer" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -371,263 +73,539 @@
 
                         <TextBlock
                             Grid.Row="0"
-                            Grid.ColumnSpan="2"
+                            Grid.ColumnSpan="3"
                             Style="{StaticResource SectionHeaderTextStyle}"
-                            Text="{loc:Text Summary_Title}" />
+                            Text="{loc:Text Preferences_ProjectBasics}" />
 
-                        <!--  Project  -->
-                        <TextBlock
+                        <Label
+                            x:Name="ProjectNameLabel"
                             Grid.Row="1"
-                            Grid.ColumnSpan="2"
-                            Style="{StaticResource SummarySectionTextStyle}"
-                            Text="{loc:Text Summary_Project}" />
-
-                        <!--
-                            Display-only bindings opt out of INotifyDataErrorInfo so the summary shows no error adorner;
-                            the invalid state is stated in text instead. Later triggers win for Text: a blank value
-                            reads "Not entered" even while invalid.
-                        -->
-                        <TextBlock
+                            Grid.Column="0"
+                            Content="{loc:Text Preferences_ProjectName}"
+                            Style="{StaticResource FieldLabelStyle}"
+                            Target="{Binding ElementName=ProjectNameTextBox}" />
+                        <TextBox
+                            x:Name="ProjectNameTextBox"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            AutomationProperties.LabeledBy="{Binding ElementName=ProjectNameLabel}"
+                            MaxLength="{x:Static validation:OrderInputRules.ProjectNameMaxLength}"
+                            Style="{StaticResource FieldTextBoxStyle}"
+                            Text="{Binding ProjectNameInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+                        <ContentControl
                             Grid.Row="2"
-                            Style="{StaticResource SummaryLabelTextStyle}"
-                            Text="{loc:Text Summary_ProjectName}" />
-                        <TextBlock Grid.Row="2" Grid.Column="1">
-                            <TextBlock.Style>
-                                <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{Binding ProjectName, Mode=OneWay, ValidatesOnNotifyDataErrors=False}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasProjectNameErrors, Mode=OneWay}" Value="True">
-                                            <Setter Property="Text" Value="{loc:Format Summary_InvalidValue, Path=ProjectName}" />
-                                            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsProjectNameBlank, Mode=OneWay}" Value="True">
-                                            <Setter Property="Text" Value="{loc:Text Summary_NotEntered}" />
-                                            <Setter Property="FontWeight" Value="Normal" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                            Grid.Column="1"
+                            Style="{StaticResource ValidationMessageStyle}"
+                            Tag="{Binding ElementName=ProjectNameTextBox}" />
 
-                        <TextBlock
+                        <Label
+                            x:Name="PostcodeLabel"
                             Grid.Row="3"
-                            Style="{StaticResource SummaryLabelTextStyle}"
-                            Text="{loc:Text Summary_Postcode}" />
-                        <TextBlock Grid.Row="3" Grid.Column="1">
-                            <TextBlock.Style>
-                                <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{Binding Postcode, Mode=OneWay, ValidatesOnNotifyDataErrors=False}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasPostcodeErrors, Mode=OneWay}" Value="True">
-                                            <Setter Property="Text" Value="{loc:Format Summary_InvalidValue, Path=Postcode}" />
-                                            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsPostcodeBlank, Mode=OneWay}" Value="True">
-                                            <Setter Property="Text" Value="{loc:Text Summary_NotEntered}" />
-                                            <Setter Property="FontWeight" Value="Normal" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-
-                        <!--  Board  -->
-                        <Border
+                            Grid.Column="0"
+                            Content="{loc:Text Preferences_Postcode}"
+                            Style="{StaticResource FieldLabelStyle}"
+                            Target="{Binding ElementName=PostcodeTextBox}" />
+                        <TextBox
+                            x:Name="PostcodeTextBox"
+                            Grid.Row="3"
+                            Grid.Column="1"
+                            MinWidth="140"
+                            MaxWidth="200"
+                            HorizontalAlignment="Left"
+                            behaviors:PostcodeMaskBehavior.IsEnabled="True"
+                            AutomationProperties.HelpText="{Binding Text, ElementName=PostcodeHint}"
+                            AutomationProperties.LabeledBy="{Binding ElementName=PostcodeLabel}"
+                            Style="{StaticResource FieldTextBoxStyle}"
+                            Text="{Binding PostcodeInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+                        <TextBlock
+                            x:Name="PostcodeHint"
                             Grid.Row="4"
-                            Grid.ColumnSpan="2"
-                            Style="{StaticResource DividerStyle}" />
-                        <TextBlock
+                            Grid.Column="1"
+                            Style="{StaticResource HintTextStyle}"
+                            Text="{loc:Text Preferences_PostcodeHint}" />
+                        <ContentControl
                             Grid.Row="5"
-                            Grid.ColumnSpan="2"
-                            Style="{StaticResource SummarySectionTextStyle}"
-                            Text="{loc:Text Summary_Board}" />
+                            Grid.Column="1"
+                            Style="{StaticResource ValidationMessageStyle}"
+                            Tag="{Binding ElementName=PostcodeTextBox}" />
 
-                        <TextBlock
+                        <Label
+                            x:Name="QuantityLabel"
                             Grid.Row="6"
-                            Style="{StaticResource SummaryLabelTextStyle}"
-                            Text="{loc:Text Summary_Material}" />
-                        <TextBlock
+                            Grid.Column="0"
+                            Content="{loc:Text Preferences_Quantity}"
+                            Style="{StaticResource FieldLabelStyle}"
+                            Target="{Binding ElementName=QuantityTextBox}" />
+                        <!--  Plain text so the input is kept and validated; typing and pasting accept digits only, and only whole numbers reach the draft.  -->
+                        <TextBox
+                            x:Name="QuantityTextBox"
                             Grid.Row="6"
                             Grid.Column="1"
-                            Style="{StaticResource SummaryValueTextStyle}"
-                            Text="{Binding SelectedMaterial.Name, Mode=OneWay}" />
-
-                        <TextBlock
+                            MinWidth="140"
+                            MaxWidth="200"
+                            HorizontalAlignment="Left"
+                            behaviors:DigitsOnlyInputBehavior.IsEnabled="True"
+                            AutomationProperties.LabeledBy="{Binding ElementName=QuantityLabel}"
+                            InputScope="Number"
+                            Style="{StaticResource FieldTextBoxStyle}"
+                            Text="{Binding QuantityInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+                        <ContentControl
                             Grid.Row="7"
-                            Style="{StaticResource SummaryLabelTextStyle}"
-                            Text="{loc:Text Summary_SolderMask}" />
-                        <ContentPresenter
-                            Grid.Row="7"
                             Grid.Column="1"
-                            Margin="0,0,0,10"
-                            Content="{Binding SelectedSolderMaskColor, Mode=OneWay}"
-                            ContentTemplate="{StaticResource SolderMaskColorTemplate}"
-                            TextElement.FontWeight="SemiBold" />
-
-                        <TextBlock
-                            Grid.Row="8"
-                            Style="{StaticResource SummaryLabelTextStyle}"
-                            Text="{loc:Text Summary_BoardThickness}" />
-                        <ContentPresenter
-                            Grid.Row="8"
-                            Grid.Column="1"
-                            Margin="0,0,0,10"
-                            Content="{Binding SelectedBoardThickness, Mode=OneWay}"
-                            ContentTemplate="{StaticResource BoardThicknessTemplate}"
-                            TextElement.FontWeight="SemiBold" />
-
-                        <!--  Pricing and production  -->
-                        <Border
-                            Grid.Row="9"
-                            Grid.ColumnSpan="2"
-                            Style="{StaticResource DividerStyle}" />
-                        <TextBlock
-                            Grid.Row="10"
-                            Grid.ColumnSpan="2"
-                            Style="{StaticResource SummarySectionTextStyle}"
-                            Text="{loc:Text Summary_PricingAndProduction}" />
-
-                        <TextBlock
-                            Grid.Row="11"
-                            Style="{StaticResource SummaryLabelTextStyle}"
-                            Text="{loc:Text Summary_Quantity}" />
-                        <TextBlock Grid.Row="11" Grid.Column="1">
-                            <TextBlock.Style>
-                                <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{Binding QuantityText, Mode=OneWay}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasQuantityErrors, Mode=OneWay}" Value="True">
-                                            <Setter Property="Text" Value="{loc:Format Summary_InvalidValue, Path=QuantityInput}" />
-                                            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsQuantityBlank, Mode=OneWay}" Value="True">
-                                            <Setter Property="Text" Value="{loc:Text Summary_NotEntered}" />
-                                            <Setter Property="FontWeight" Value="Normal" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-
-                        <TextBlock
-                            Grid.Row="12"
-                            Style="{StaticResource SummaryLabelTextStyle}"
-                            Text="{loc:Text Summary_BaseUnitPrice}" />
-                        <TextBlock
-                            Grid.Row="12"
-                            Grid.Column="1"
-                            Style="{StaticResource SummaryValueTextStyle}"
-                            Text="{Binding BaseUnitPriceText, Mode=OneWay}" />
-
-                        <TextBlock
-                            Grid.Row="13"
-                            Style="{StaticResource SummaryLabelTextStyle}"
-                            Text="{loc:Text Summary_MaterialSurchargePerUnit}" />
-                        <TextBlock
-                            Grid.Row="13"
-                            Grid.Column="1"
-                            Style="{StaticResource SummaryValueTextStyle}"
-                            Text="{Binding MaterialSurchargePerUnitText, Mode=OneWay}" />
-
-                        <TextBlock
-                            Grid.Row="14"
-                            Style="{StaticResource SummaryLabelTextStyle}"
-                            Text="{loc:Text Summary_EstimatedUnitPrice}" />
-                        <TextBlock
-                            Grid.Row="14"
-                            Grid.Column="1"
-                            Style="{StaticResource SummaryValueTextStyle}"
-                            Text="{Binding EstimatedUnitPriceText, Mode=OneWay}" />
-
-                        <!--  While the quantity is invalid there is no total to show.  -->
-                        <TextBlock
-                            Grid.Row="15"
-                            Style="{StaticResource SummaryTotalLabelTextStyle}"
-                            Text="{loc:Text Summary_EstimatedTotal}" />
-                        <TextBlock Grid.Row="15" Grid.Column="1">
-                            <TextBlock.Style>
-                                <Style BasedOn="{StaticResource SummaryTotalValueTextStyle}" TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{Binding EstimatedTotalPriceText, Mode=OneWay}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasQuantityErrors, Mode=OneWay}" Value="True">
-                                            <Setter Property="Text" Value="—" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-
-                        <TextBlock
-                            Grid.Row="16"
-                            Style="{StaticResource SummaryLabelTextStyle}"
-                            Text="{loc:Text Summary_EstimatedProductionTime}" />
-                        <TextBlock
-                            Grid.Row="16"
-                            Grid.Column="1"
-                            Style="{StaticResource SummaryValueTextStyle}"
-                            Text="{Binding EstimatedProductionTimeText, Mode=OneWay}" />
-
-                        <!--  Disclaimer with an information icon; the estimate is not presented as a final quote.  -->
-                        <Grid
-                            Grid.Row="17"
-                            Grid.ColumnSpan="2"
-                            Margin="0,4,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <iconPacks:PackIconMaterial
-                                Width="14"
-                                Height="14"
-                                Margin="0,1,6,0"
-                                VerticalAlignment="Top"
-                                Foreground="{DynamicResource TextSecondaryBrush}"
-                                Kind="InformationOutline" />
-                            <TextBlock
-                                Grid.Column="1"
-                                Margin="0,0,0,14"
-                                Style="{StaticResource HintTextStyle}"
-                                Text="{loc:Text Summary_Disclaimer}" />
-                        </Grid>
+                            Style="{StaticResource ValidationMessageStyle}"
+                            Tag="{Binding ElementName=QuantityTextBox}" />
                     </Grid>
                 </Border>
-            </Grid>
-        </ScrollViewer>
 
-        <Border Grid.Row="1" Style="{StaticResource FooterBarStyle}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <Button
-                    Grid.Column="0"
-                    AutomationProperties.Name="{loc:Text Actions_ResetToDefaults}"
-                    Command="{Binding ResetToDefaultsCommand}"
-                    Style="{StaticResource SecondaryButtonStyle}">
-                    <StackPanel Orientation="Horizontal">
+                <!--  Section B: board preferences  -->
+                <Border Margin="{StaticResource CardGapMargin}" Style="{StaticResource CardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition
+                                Width="Auto"
+                                MinWidth="120"
+                                SharedSizeGroup="FieldLabel" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="FieldTrailer" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.ColumnSpan="3"
+                            Style="{StaticResource SectionHeaderTextStyle}"
+                            Text="{loc:Text Preferences_BoardPreferences}" />
+
+                        <Label
+                            x:Name="MaterialLabel"
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Content="{loc:Text Preferences_Material}"
+                            Style="{StaticResource FieldLabelStyle}"
+                            Target="{Binding ElementName=MaterialComboBox}" />
+                        <ComboBox
+                            x:Name="MaterialComboBox"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            AutomationProperties.LabeledBy="{Binding ElementName=MaterialLabel}"
+                            DisplayMemberPath="Name"
+                            ItemsSource="{Binding Materials, Mode=OneTime}"
+                            SelectedItem="{Binding Draft.SelectedMaterial, Mode=TwoWay}"
+                            Style="{StaticResource FieldComboBoxStyle}"
+                            TextSearch.TextPath="Name">
+                            <ComboBox.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource {x:Type ComboBoxItem}}" TargetType="ComboBoxItem">
+                                    <Setter Property="AutomationProperties.Name" Value="{Binding Name, Mode=OneWay}" />
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+                        <!--
+                            The selected material's extra cost per board, e.g. "+$37.25 / board", or "Included".
+                            Fixed minimum width keeps the ComboBox from resizing as the surcharge text changes.
+                        -->
+                        <TextBlock
+                            x:Name="MaterialSurchargeText"
+                            Grid.Row="1"
+                            Grid.Column="2"
+                            MinWidth="72">
+                            <TextBlock.Style>
+                                <Style BasedOn="{StaticResource SurchargeTextStyle}" TargetType="TextBlock">
+                                    <Setter Property="Text" Value="{loc:Format Pricing_SurchargePerBoard, Path=Draft.PriceEstimate.MaterialSurchargePerUnit, Converter={converters:UsdConverter}}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Draft.PriceEstimate.MaterialSurchargePerUnit, Mode=OneWay}" Value="0">
+                                            <Setter Property="Text" Value="{loc:Text Pricing_Included}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            Style="{StaticResource HintTextStyle}"
+                            Text="{loc:Format Preferences_ProductionTimeHint,
+                                              Path=Draft.ProductionDays}" />
+
+                        <Label
+                            x:Name="SolderMaskLabel"
+                            Grid.Row="3"
+                            Grid.Column="0"
+                            Content="{loc:Text Preferences_SolderMaskColor}"
+                            Style="{StaticResource FieldLabelStyle}"
+                            Target="{Binding ElementName=SolderMaskComboBox}" />
+                        <ComboBox
+                            x:Name="SolderMaskComboBox"
+                            Grid.Row="3"
+                            Grid.Column="1"
+                            AutomationProperties.LabeledBy="{Binding ElementName=SolderMaskLabel}"
+                            ItemTemplate="{StaticResource SolderMaskColorTemplate}"
+                            ItemsSource="{Binding SolderMaskColors, Mode=OneTime}"
+                            SelectedItem="{Binding Draft.SelectedSolderMaskColor, Mode=TwoWay}"
+                            Style="{StaticResource FieldComboBoxStyle}"
+                            TextSearch.TextPath="Name">
+                            <ComboBox.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource {x:Type ComboBoxItem}}" TargetType="ComboBoxItem">
+                                    <Setter Property="AutomationProperties.Name" Value="{loc:CatalogName SolderMaskColor}" />
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+
+                        <Label
+                            x:Name="BoardThicknessLabel"
+                            Grid.Row="4"
+                            Grid.Column="0"
+                            Content="{loc:Text Preferences_BoardThickness}"
+                            Style="{StaticResource FieldLabelStyle}"
+                            Target="{Binding ElementName=BoardThicknessComboBox}" />
+                        <ComboBox
+                            x:Name="BoardThicknessComboBox"
+                            Grid.Row="4"
+                            Grid.Column="1"
+                            AutomationProperties.LabeledBy="{Binding ElementName=BoardThicknessLabel}"
+                            ItemTemplate="{StaticResource BoardThicknessTemplate}"
+                            ItemsSource="{Binding BoardThicknesses, Mode=OneTime}"
+                            SelectedItem="{Binding Draft.SelectedBoardThickness, Mode=TwoWay}"
+                            Style="{StaticResource FieldComboBoxStyle}">
+                            <ComboBox.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource {x:Type ComboBoxItem}}" TargetType="ComboBoxItem">
+                                    <Setter Property="AutomationProperties.Name" Value="{loc:Format Thickness_Millimeters, Path=Millimeters}" />
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+                    </Grid>
+                </Border>
+
+                <!--  Section C: optional notes  -->
+                <Border Style="{StaticResource CardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition
+                                Width="Auto"
+                                MinWidth="120"
+                                SharedSizeGroup="FieldLabel" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="FieldTrailer" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.ColumnSpan="3"
+                            Style="{StaticResource SectionHeaderTextStyle}"
+                            Text="{loc:Text Preferences_AdditionalDetails}" />
+
+                        <Label
+                            x:Name="NotesLabel"
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Margin="0,6,16,14"
+                            VerticalAlignment="Top"
+                            Content="{loc:Text Preferences_Notes}"
+                            Style="{StaticResource FieldLabelStyle}"
+                            Target="{Binding ElementName=NotesTextBox}" />
+                        <!--  Spans to the form's right edge; fixed height with its own scrollbar, so it never grows with its content.  -->
+                        <TextBox
+                            x:Name="NotesTextBox"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="2"
+                            Height="110"
+                            VerticalContentAlignment="Top"
+                            AcceptsReturn="True"
+                            AutomationProperties.HelpText="{Binding NotesCounterText, Mode=OneWay}"
+                            AutomationProperties.LabeledBy="{Binding ElementName=NotesLabel}"
+                            MaxLength="{x:Static validation:OrderInputRules.NotesMaxLength}"
+                            Style="{StaticResource FieldTextBoxStyle}"
+                            Text="{Binding NotesInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                            TextWrapping="Wrap"
+                            VerticalScrollBarVisibility="Auto" />
+                        <TextBlock
+                            x:Name="NotesCounter"
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="2"
+                            HorizontalAlignment="Right"
+                            Style="{StaticResource HintTextStyle}"
+                            Text="{Binding NotesCounterText, Mode=OneWay}" />
+                        <ContentControl
+                            Grid.Row="3"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="2"
+                            Style="{StaticResource ValidationMessageStyle}"
+                            Tag="{Binding ElementName=NotesTextBox}" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <!--  Summary: every value is bound to the same view model properties as the inputs.  -->
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.ColumnSpan="2"
+                        Style="{StaticResource SectionHeaderTextStyle}"
+                        Text="{loc:Text Summary_Title}" />
+
+                    <!--  Project  -->
+                    <TextBlock
+                        Grid.Row="1"
+                        Grid.ColumnSpan="2"
+                        Style="{StaticResource SummarySectionTextStyle}"
+                        Text="{loc:Text Summary_Project}" />
+
+                    <!--
+                        The summary shows the draft; the draft reports no errors, so there is no error adorner here
+                        and the invalid state (from the step's validation) is stated in text instead. Later triggers
+                        win for Text: a blank value reads "Not entered" even while invalid.
+                    -->
+                    <TextBlock
+                        Grid.Row="2"
+                        Style="{StaticResource SummaryLabelTextStyle}"
+                        Text="{loc:Text Summary_ProjectName}" />
+                    <TextBlock Grid.Row="2" Grid.Column="1">
+                        <TextBlock.Style>
+                            <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding Draft.ProjectName, Mode=OneWay}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasProjectNameErrors, Mode=OneWay}" Value="True">
+                                        <Setter Property="Text" Value="{loc:Format Summary_InvalidValue, Path=Draft.ProjectName}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsProjectNameBlank, Mode=OneWay}" Value="True">
+                                        <Setter Property="Text" Value="{loc:Text Summary_NotEntered}" />
+                                        <Setter Property="FontWeight" Value="Normal" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <TextBlock
+                        Grid.Row="3"
+                        Style="{StaticResource SummaryLabelTextStyle}"
+                        Text="{loc:Text Summary_Postcode}" />
+                    <TextBlock Grid.Row="3" Grid.Column="1">
+                        <TextBlock.Style>
+                            <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding Draft.Postcode, Mode=OneWay}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasPostcodeErrors, Mode=OneWay}" Value="True">
+                                        <Setter Property="Text" Value="{loc:Format Summary_InvalidValue, Path=Draft.Postcode}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsPostcodeBlank, Mode=OneWay}" Value="True">
+                                        <Setter Property="Text" Value="{loc:Text Summary_NotEntered}" />
+                                        <Setter Property="FontWeight" Value="Normal" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!--  Board  -->
+                    <Border
+                        Grid.Row="4"
+                        Grid.ColumnSpan="2"
+                        Style="{StaticResource DividerStyle}" />
+                    <TextBlock
+                        Grid.Row="5"
+                        Grid.ColumnSpan="2"
+                        Style="{StaticResource SummarySectionTextStyle}"
+                        Text="{loc:Text Summary_Board}" />
+
+                    <TextBlock
+                        Grid.Row="6"
+                        Style="{StaticResource SummaryLabelTextStyle}"
+                        Text="{loc:Text Summary_Material}" />
+                    <TextBlock
+                        Grid.Row="6"
+                        Grid.Column="1"
+                        Style="{StaticResource SummaryValueTextStyle}"
+                        Text="{Binding Draft.SelectedMaterial.Name, Mode=OneWay}" />
+
+                    <TextBlock
+                        Grid.Row="7"
+                        Style="{StaticResource SummaryLabelTextStyle}"
+                        Text="{loc:Text Summary_SolderMask}" />
+                    <ContentPresenter
+                        Grid.Row="7"
+                        Grid.Column="1"
+                        Margin="0,0,0,10"
+                        Content="{Binding Draft.SelectedSolderMaskColor, Mode=OneWay}"
+                        ContentTemplate="{StaticResource SolderMaskColorTemplate}"
+                        TextElement.FontWeight="SemiBold" />
+
+                    <TextBlock
+                        Grid.Row="8"
+                        Style="{StaticResource SummaryLabelTextStyle}"
+                        Text="{loc:Text Summary_BoardThickness}" />
+                    <ContentPresenter
+                        Grid.Row="8"
+                        Grid.Column="1"
+                        Margin="0,0,0,10"
+                        Content="{Binding Draft.SelectedBoardThickness, Mode=OneWay}"
+                        ContentTemplate="{StaticResource BoardThicknessTemplate}"
+                        TextElement.FontWeight="SemiBold" />
+
+                    <!--  Pricing and production  -->
+                    <Border
+                        Grid.Row="9"
+                        Grid.ColumnSpan="2"
+                        Style="{StaticResource DividerStyle}" />
+                    <TextBlock
+                        Grid.Row="10"
+                        Grid.ColumnSpan="2"
+                        Style="{StaticResource SummarySectionTextStyle}"
+                        Text="{loc:Text Summary_PricingAndProduction}" />
+
+                    <TextBlock
+                        Grid.Row="11"
+                        Style="{StaticResource SummaryLabelTextStyle}"
+                        Text="{loc:Text Summary_Quantity}" />
+                    <TextBlock Grid.Row="11" Grid.Column="1">
+                        <TextBlock.Style>
+                            <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
+                                <Setter Property="Text" Value="{loc:Format Boards_Format, Path=Draft.Quantity}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasQuantityErrors, Mode=OneWay}" Value="True">
+                                        <Setter Property="Text" Value="{loc:Format Summary_InvalidValue, Path=QuantityInput}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsQuantityBlank, Mode=OneWay}" Value="True">
+                                        <Setter Property="Text" Value="{loc:Text Summary_NotEntered}" />
+                                        <Setter Property="FontWeight" Value="Normal" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <TextBlock
+                        Grid.Row="12"
+                        Style="{StaticResource SummaryLabelTextStyle}"
+                        Text="{loc:Text Summary_BaseUnitPrice}" />
+                    <TextBlock
+                        Grid.Row="12"
+                        Grid.Column="1"
+                        Style="{StaticResource SummaryValueTextStyle}"
+                        Text="{Binding Draft.PriceEstimate.BaseUnitPrice, Mode=OneWay, Converter={converters:UsdConverter}}" />
+
+                    <TextBlock
+                        Grid.Row="13"
+                        Style="{StaticResource SummaryLabelTextStyle}"
+                        Text="{loc:Text Summary_MaterialSurchargePerUnit}" />
+                    <TextBlock Grid.Row="13" Grid.Column="1">
+                        <TextBlock.Style>
+                            <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding Draft.PriceEstimate.MaterialSurchargePerUnit, Mode=OneWay, Converter={converters:UsdConverter}, StringFormat='+{0}'}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Draft.PriceEstimate.MaterialSurchargePerUnit, Mode=OneWay}" Value="0">
+                                        <Setter Property="Text" Value="{loc:Text Pricing_Included}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <TextBlock
+                        Grid.Row="14"
+                        Style="{StaticResource SummaryLabelTextStyle}"
+                        Text="{loc:Text Summary_EstimatedUnitPrice}" />
+                    <TextBlock
+                        Grid.Row="14"
+                        Grid.Column="1"
+                        Style="{StaticResource SummaryValueTextStyle}"
+                        Text="{Binding Draft.PriceEstimate.EstimatedUnitPrice, Mode=OneWay, Converter={converters:UsdConverter}}" />
+
+                    <!--  While the quantity is invalid there is no total to show.  -->
+                    <TextBlock
+                        Grid.Row="15"
+                        Style="{StaticResource SummaryTotalLabelTextStyle}"
+                        Text="{loc:Text Summary_EstimatedTotal}" />
+                    <TextBlock Grid.Row="15" Grid.Column="1">
+                        <TextBlock.Style>
+                            <Style BasedOn="{StaticResource SummaryTotalValueTextStyle}" TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding Draft.TotalPrice, Mode=OneWay, Converter={converters:UsdConverter}}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasQuantityErrors, Mode=OneWay}" Value="True">
+                                        <Setter Property="Text" Value="—" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <TextBlock
+                        Grid.Row="16"
+                        Style="{StaticResource SummaryLabelTextStyle}"
+                        Text="{loc:Text Summary_EstimatedProductionTime}" />
+                    <TextBlock
+                        Grid.Row="16"
+                        Grid.Column="1"
+                        Style="{StaticResource SummaryValueTextStyle}"
+                        Text="{loc:Format Days_Format,
+                                          Path=Draft.ProductionDays}" />
+
+                    <!--  Disclaimer with an information icon; the estimate is not presented as a final quote.  -->
+                    <Grid
+                        Grid.Row="17"
+                        Grid.ColumnSpan="2"
+                        Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
                         <iconPacks:PackIconMaterial
-                            Margin="0,0,8,0"
-                            Kind="Restore"
-                            Style="{StaticResource ButtonIconStyle}" />
-                        <TextBlock VerticalAlignment="Center" Text="{loc:Text Actions_ResetToDefaults}" />
-                    </StackPanel>
-                </Button>
-                <Button
-                    Grid.Column="2"
-                    AutomationProperties.Name="{loc:Text Actions_SaveAndContinue}"
-                    Command="{Binding SaveAndContinueCommand}"
-                    Style="{StaticResource PrimaryButtonStyle}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock VerticalAlignment="Center" Text="{loc:Text Actions_SaveAndContinue}" />
-                        <iconPacks:PackIconMaterial
-                            Margin="8,0,0,0"
-                            Kind="ArrowRight"
-                            Style="{StaticResource ButtonIconStyle}" />
-                    </StackPanel>
-                </Button>
-            </Grid>
-        </Border>
-    </Grid>
+                            Width="14"
+                            Height="14"
+                            Margin="0,1,6,0"
+                            VerticalAlignment="Top"
+                            Foreground="{DynamicResource TextSecondaryBrush}"
+                            Kind="InformationOutline" />
+                        <TextBlock
+                            Grid.Column="1"
+                            Margin="0,0,0,14"
+                            Style="{StaticResource HintTextStyle}"
+                            Text="{loc:Text Summary_Disclaimer}" />
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </ScrollViewer>
 </UserControl>
