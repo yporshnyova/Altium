@@ -35,7 +35,7 @@
             <Path
                 x:Name="Outline"
                 Data="{Binding Tag.Outline, ElementName=Board}"
-                Fill="{Binding SolderMaskHexColor, Mode=OneWay}"
+                Fill="{Binding Draft.SelectedSolderMaskColor.HexColor, Mode=OneWay}"
                 Stroke="{DynamicResource SwatchBorderBrush}"
                 StrokeThickness="0.6" />
             <!--  Copper traces under the mask  -->

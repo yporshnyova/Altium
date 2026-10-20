@@ -30,10 +30,16 @@ public sealed class FormatExtension : MarkupExtension
 
     public string Path { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Optional converter applied to the bound value before it is placed into the format string, e.g. a US dollar amount:
+    /// <c>{loc:Format Pricing_SurchargePerBoard, Path=Amount, Converter={converters:UsdConverter}}</c>.
+    /// </summary>
+    public IValueConverter? Converter { get; set; }
+
     public override object ProvideValue(IServiceProvider serviceProvider)
     {
         MultiBinding binding = new() { Converter = FormatConverter.Instance, ConverterParameter = Key, Mode = BindingMode.OneWay };
-        binding.Bindings.Add(new Binding(Path) { Mode = BindingMode.OneWay, ValidatesOnNotifyDataErrors = false });
+        binding.Bindings.Add(new Binding(Path) { Mode = BindingMode.OneWay, ValidatesOnNotifyDataErrors = false, Converter = Converter });
         binding.Bindings.Add(LanguageBinding());
         return binding.ProvideValue(serviceProvider);
     }

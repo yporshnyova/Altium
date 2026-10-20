@@ -84,15 +84,16 @@
         </Border>
 
         <!--
-            The selected tab is the workflow step: each TabItem's Tag is its step, selected through SelectedValue. The
-            workflow state decides: a tab is enabled only while its step is available (unlocked, Preferences valid, and
-            the order not yet completed), and SelectionFollowsSourceBehavior returns the selection to the current step
-            if the state refuses a change.
+            The selected tab is the wizard's current step: each TabItem's Tag is its step, selected through SelectedValue.
+            The wizard decides: a tab is enabled only while its step is available (unlocked, Preferences valid, no
+            confirmation pending, and the order not yet completed), and SelectionFollowsSourceBehavior returns the
+            selection to the current step if the wizard refuses a change.
         -->
         <TabControl
             Margin="12,12,12,12"
             behaviors:SelectionFollowsSourceBehavior.IsEnabled="True"
-            SelectedValue="{Binding NavigationState.CurrentStep, Mode=TwoWay}"
+            DataContext="{Binding Wizard, Mode=OneTime}"
+            SelectedValue="{Binding CurrentStep, Mode=TwoWay}"
             SelectedValuePath="Tag">
             <TabControl.Resources>
                 <Style
@@ -100,52 +101,160 @@
                     BasedOn="{StaticResource {x:Type TabItem}}"
                     TargetType="TabItem">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding NavigationState.IsOrderCompleted}" Value="True">
+                        <DataTrigger Binding="{Binding IsCompleted}" Value="True">
                             <Setter Property="ToolTip" Value="{loc:Text Workflow_OrderCompleted}" />
                             <Setter Property="AutomationProperties.HelpText" Value="{loc:Text Workflow_OrderCompleted}" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
             </TabControl.Resources>
-            <!--  The view is resolved from Resources/Templates/Mappings.xaml.  -->
+            <!--
+                Every step's view (resolved from Resources/Templates/Mappings.xaml) sits above the wizard's one navigation
+                footer. The footer's actions and texts come from the wizard; on Preferences, where there is no Back, its
+                left side holds that step's own Reset to Defaults.
+            -->
+            <TabControl.ContentTemplate>
+                <DataTemplate>
+                    <DockPanel>
+                        <Border
+                            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TabControl}}"
+                            DockPanel.Dock="Bottom"
+                            Style="{StaticResource FooterBarStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Button
+                                    Grid.Column="0"
+                                    AutomationProperties.Name="{Binding BackActionText}"
+                                    Command="{Binding BackCommand}">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource SecondaryButtonStyle}" TargetType="Button">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBackVisible}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconMaterial
+                                            Margin="0,0,8,0"
+                                            Kind="ArrowLeft"
+                                            Style="{StaticResource ButtonIconStyle}" />
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding BackActionText}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button
+                                    Grid.Column="0"
+                                    AutomationProperties.Name="{loc:Text Actions_ResetToDefaults}"
+                                    Command="{Binding Preferences.ResetToDefaultsCommand}">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource SecondaryButtonStyle}" TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CurrentStep}" Value="{x:Static vm:WorkflowStep.Preferences}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconMaterial
+                                            Margin="0,0,8,0"
+                                            Kind="Restore"
+                                            Style="{StaticResource ButtonIconStyle}" />
+                                        <TextBlock VerticalAlignment="Center" Text="{loc:Text Actions_ResetToDefaults}" />
+                                    </StackPanel>
+                                </Button>
+                                <!--  Disabled while the order confirmation is open.  -->
+                                <Button
+                                    Grid.Column="2"
+                                    AutomationProperties.Name="{Binding PrimaryActionText}"
+                                    Command="{Binding PrimaryActionCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <!--  Place Order and New Order lead with an icon; the other actions point forward.  -->
+                                        <iconPacks:PackIconMaterial Margin="0,0,8,0">
+                                            <iconPacks:PackIconMaterial.Style>
+                                                <Style BasedOn="{StaticResource ButtonIconStyle}" TargetType="iconPacks:PackIconMaterial">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding CurrentStep}" Value="{x:Static vm:WorkflowStep.Order}">
+                                                            <Setter Property="Kind" Value="ClipboardCheckOutline" />
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsCompleted}" Value="True">
+                                                            <Setter Property="Kind" Value="Plus" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </iconPacks:PackIconMaterial.Style>
+                                        </iconPacks:PackIconMaterial>
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding PrimaryActionText}" />
+                                        <iconPacks:PackIconMaterial Margin="8,0,0,0" Kind="ArrowRight">
+                                            <iconPacks:PackIconMaterial.Style>
+                                                <Style BasedOn="{StaticResource ButtonIconStyle}" TargetType="iconPacks:PackIconMaterial">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding CurrentStep}" Value="{x:Static vm:WorkflowStep.Order}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </iconPacks:PackIconMaterial.Style>
+                                        </iconPacks:PackIconMaterial>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+                        <!--
+                            The step view model itself is validated (INotifyDataErrorInfo); its errors are shown by the
+                            step's own fields, so this whole-object binding must not frame the content in red.
+                        -->
+                        <ContentPresenter Content="{Binding ValidatesOnNotifyDataErrors=False}" />
+                    </DockPanel>
+                </DataTemplate>
+            </TabControl.ContentTemplate>
             <TabItem
                 AutomationProperties.Name="{loc:Text Tab_Preferences}"
                 Content="{Binding Preferences, Mode=OneTime}"
-                IsEnabled="{Binding NavigationState.IsPreferencesAvailable}"
+                IsEnabled="{Binding IsPreferencesAvailable}"
                 Style="{StaticResource EditableStepTabItemStyle}"
                 Tag="{x:Static vm:WorkflowStep.Preferences}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="CogOutline" Style="{StaticResource TabIconStyle}" />
                         <TextBlock VerticalAlignment="Center" Text="{loc:Text Tab_Preferences}" />
-                        <iconPacks:PackIconMaterial Style="{StaticResource StepCompletedIconStyle}" Tag="{Binding NavigationState.IsPreferencesCompleted}" />
+                        <iconPacks:PackIconMaterial Style="{StaticResource StepCompletedIconStyle}" Tag="{Binding IsPreferencesCompleted}" />
                     </StackPanel>
                 </TabItem.Header>
             </TabItem>
             <TabItem
                 AutomationProperties.Name="{loc:Text Tab_Quote}"
                 Content="{Binding Quote, Mode=OneTime}"
-                IsEnabled="{Binding NavigationState.IsQuoteAvailable}"
+                IsEnabled="{Binding IsQuoteAvailable}"
                 Style="{StaticResource EditableStepTabItemStyle}"
                 Tag="{x:Static vm:WorkflowStep.Quote}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="FileDocumentOutline" Style="{StaticResource TabIconStyle}" />
                         <TextBlock VerticalAlignment="Center" Text="{loc:Text Tab_Quote}" />
-                        <iconPacks:PackIconMaterial Style="{StaticResource StepCompletedIconStyle}" Tag="{Binding NavigationState.IsQuoteCompleted}" />
+                        <iconPacks:PackIconMaterial Style="{StaticResource StepCompletedIconStyle}" Tag="{Binding IsQuoteCompleted}" />
                     </StackPanel>
                 </TabItem.Header>
             </TabItem>
             <TabItem
                 AutomationProperties.Name="{loc:Text Tab_Order}"
                 Content="{Binding Order, Mode=OneTime}"
-                IsEnabled="{Binding NavigationState.IsOrderAvailable}"
+                IsEnabled="{Binding IsOrderAvailable}"
                 Tag="{x:Static vm:WorkflowStep.Order}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ClipboardCheckOutline" Style="{StaticResource TabIconStyle}" />
                         <TextBlock VerticalAlignment="Center" Text="{loc:Text Tab_Order}" />
-                        <iconPacks:PackIconMaterial Style="{StaticResource StepCompletedIconStyle}" Tag="{Binding NavigationState.IsOrderCompleted}" />
+                        <iconPacks:PackIconMaterial Style="{StaticResource StepCompletedIconStyle}" Tag="{Binding IsCompleted}" />
                     </StackPanel>
                 </TabItem.Header>
             </TabItem>

@@ -43,12 +43,12 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="{StaticResource MaskLayerHeight}" />
                 </Grid.RowDefinitions>
-                <Border Grid.Row="0" Background="{Binding SolderMaskHexColor, Mode=OneWay}" />
+                <Border Grid.Row="0" Background="{Binding Draft.SelectedSolderMaskColor.HexColor, Mode=OneWay}" />
                 <Border
                     x:Name="Core"
                     Grid.Row="1"
-                    Background="{Binding SelectedMaterial, Mode=OneWay, Converter={converters:SubstrateBrushConverter}}" />
-                <Border Grid.Row="2" Background="{Binding SolderMaskHexColor, Mode=OneWay}" />
+                    Background="{Binding Draft.SelectedMaterial, Mode=OneWay, Converter={converters:SubstrateBrushConverter}}" />
+                <Border Grid.Row="2" Background="{Binding Draft.SelectedSolderMaskColor.HexColor, Mode=OneWay}" />
                 <!--  Thin edge keeps dark masks and light cores visible on either theme.  -->
                 <Border
                     Grid.RowSpan="3"
@@ -75,6 +75,6 @@
             VerticalAlignment="Center"
             FontWeight="SemiBold"
             Foreground="{DynamicResource TextPrimaryBrush}"
-            Text="{loc:Format Thickness_Millimeters, Path=SelectedBoardThickness.Millimeters}" />
+            Text="{loc:Format Thickness_Millimeters, Path=Draft.SelectedBoardThickness.Millimeters}" />
     </Grid>
 </UserControl>

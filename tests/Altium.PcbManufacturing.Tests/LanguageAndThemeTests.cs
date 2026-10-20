@@ -17,12 +17,12 @@ public sealed class UiCultureCollection
 }
 
 /// <summary>
-/// Runtime EN/RU switching of the screens, theme toggling, and persistence of both choices.
+/// Runtime EN/RU switching of the steps and the footer, theme toggling, and persistence of both choices.
 /// </summary>
 [Collection(UiCultureCollection.Name)]
 public sealed class LanguageAndThemeTests : IDisposable
 {
-    private readonly TestScreens screens = new();
+    private readonly TestWizard wizard = new();
     private readonly FakeThemeService theme = new();
     private readonly string settingsPath = Path.Combine(Path.GetTempPath(), $"ui-settings-{Guid.NewGuid():N}.json");
     private readonly UiSettingsStore store;
@@ -31,7 +31,7 @@ public sealed class LanguageAndThemeTests : IDisposable
     public LanguageAndThemeTests()
     {
         store = new UiSettingsStore(settingsPath);
-        mainWindow = new MainWindowViewModel(screens.Preferences, screens.Quote, screens.Order, screens.Navigation, screens.Localizer, theme, store);
+        mainWindow = new MainWindowViewModel(wizard.Wizard, wizard.Localizer, theme, store);
     }
 
     public void Dispose()
@@ -44,11 +44,11 @@ public sealed class LanguageAndThemeTests : IDisposable
     public void SelectingRussian_SwitchesTheResourcesNotifiesBindingsAndSaves()
     {
         List<string?> changed = [];
-        screens.Localizer.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+        wizard.Localizer.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
 
         mainWindow.SelectedLanguage = Localizer.SupportedLanguages[1];
 
-        Assert.Equal("Параметры", screens.Localizer[nameof(Strings.Tab_Preferences)]);
+        Assert.Equal("Параметры", wizard.Localizer[nameof(Strings.Tab_Preferences)]);
         Assert.Equal("Введите почтовый индекс.", Strings.Validation_PostcodeRequired);
         // {loc:Text} bindings go through the indexer and refresh on "Item[]".
         Assert.Contains("Item[]", changed);
@@ -56,7 +56,7 @@ public sealed class LanguageAndThemeTests : IDisposable
 
         mainWindow.SelectedLanguage = Localizer.SupportedLanguages[0];
 
-        Assert.Equal("Preferences", screens.Localizer[nameof(Strings.Tab_Preferences)]);
+        Assert.Equal("Preferences", wizard.Localizer[nameof(Strings.Tab_Preferences)]);
     }
 
     [Fact]
@@ -70,55 +70,42 @@ public sealed class LanguageAndThemeTests : IDisposable
     }
 
     [Fact]
-    public void Russian_LocalizesTheScreensButKeepsPricesInUsd()
+    public void FooterLabels_FollowTheLanguageAndTheStep()
     {
-        screens.Preferences.SelectedMaterial = screens.Catalog.Materials[1];
-        screens.Preferences.QuantityInput = "2";
+        List<string?> changed = [];
+        wizard.Wizard.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
 
-        screens.Localizer.SetLanguage(AppLanguage.Russian);
+        wizard.Localizer.SetLanguage(AppLanguage.Russian);
 
-        Assert.Equal("2 шт.", screens.Preferences.QuantityText);
-        Assert.Equal("+$223.50 за плату", screens.Preferences.MaterialSurchargeText);
-        Assert.Equal("12 дней", screens.Quote.EstimatedProductionTimeText);
-        Assert.Equal("$745.00", screens.Quote.EstimatedTotalPriceText);
-        Assert.Equal(["Размеры", "Слои", "Покрытие", "Параметры платы"], screens.Quote.ParameterGroups.Select(group => group.Title));
-        // Numbers in texts follow the UI language.
-        Assert.Equal("1,6 мм", screens.Quote.ParameterGroups.SelectMany(group => group.Parameters).Single(row => row.Label == "Толщина платы").Value);
-        Assert.Equal("2 шт.", screens.Order.QuantityText);
-        Assert.Equal("Зелёный", screens.Order.SolderMaskText);
-        Assert.Equal("$745.00", screens.Order.EstimatedTotalPriceText);
+        Assert.Equal("Сохранить и продолжить", wizard.Wizard.PrimaryActionText);
+        Assert.Contains(nameof(OrderWizardViewModel.PrimaryActionText), changed);
+        Assert.Contains(nameof(OrderWizardViewModel.BackActionText), changed);
+
+        wizard.CompletePreferences();
+
+        Assert.Equal("Перейти к заказу", wizard.Wizard.PrimaryActionText);
+        Assert.Equal("Назад к параметрам", wizard.Wizard.BackActionText);
+
+        wizard.Localizer.SetLanguage(AppLanguage.English);
+
+        Assert.Equal("Continue to Order", wizard.Wizard.PrimaryActionText);
+        Assert.Equal("Back to Preferences", wizard.Wizard.BackActionText);
     }
 
     [Fact]
     public void LanguageChange_RelocalizesShownErrorsOnlyAndKeepsEveryValue()
     {
-        screens.Preferences.Postcode = "55-2";
-        screens.Preferences.QuantityInput = "abc";
+        wizard.Preferences.PostcodeInput = "55-2";
+        wizard.Preferences.QuantityInput = "abc";
 
-        screens.Localizer.SetLanguage(AppLanguage.Russian);
+        wizard.Localizer.SetLanguage(AppLanguage.Russian);
 
-        Assert.Equal(["Используйте формат NN-NNN."], Errors(nameof(PreferencesViewModel.Postcode)));
+        Assert.Equal(["Используйте формат NN-NNN."], Errors(nameof(PreferencesViewModel.PostcodeInput)));
         Assert.Equal(["Введите целое число плат, не меньше 1."], Errors(nameof(PreferencesViewModel.QuantityInput)));
         // The untouched project name is not validated by a language change.
-        Assert.Empty(Errors(nameof(PreferencesViewModel.ProjectName)));
-        Assert.Equal("55-2", screens.State.Postcode);
-        Assert.Equal("abc", screens.Preferences.QuantityInput);
-    }
-
-    [Fact]
-    public void LanguageAndThemeChanges_LeaveTheManufacturingStateUntouched()
-    {
-        screens.Preferences.Postcode = "55-220";
-        screens.Preferences.SelectedMaterial = screens.Catalog.Materials[1];
-
-        mainWindow.SelectedLanguage = Localizer.SupportedLanguages[1];
-        mainWindow.ToggleThemeCommand.Execute(null);
-        mainWindow.SelectedLanguage = Localizer.SupportedLanguages[0];
-
-        Assert.Equal("55-220", screens.State.Postcode);
-        Assert.Same(screens.Catalog.Materials[1], screens.State.SelectedMaterial);
-        Assert.Equal("$372.50", screens.Preferences.EstimatedUnitPriceText);
-        Assert.False(screens.Preferences.HasErrors);
+        Assert.Empty(Errors(nameof(PreferencesViewModel.ProjectNameInput)));
+        Assert.Equal("55-2", wizard.Draft.Postcode);
+        Assert.Equal("abc", wizard.Preferences.QuantityInput);
     }
 
     [Fact]
@@ -126,18 +113,17 @@ public sealed class LanguageAndThemeTests : IDisposable
     {
         mainWindow.SelectedLanguage = Localizer.SupportedLanguages[1];
         mainWindow.ToggleThemeCommand.Execute(null);
-        screens.CompleteQuote();
-        await screens.Order.PlaceOrderCommand.ExecuteAsync(null);
+        await wizard.CompleteOrderAsync();
 
-        screens.Order.NewOrderCommand.Execute(null);
+        await wizard.ClickPrimaryAsync(); // New Order
 
-        Assert.Equal(AppLanguage.Russian, screens.Localizer.Language);
+        Assert.Equal(AppLanguage.Russian, wizard.Localizer.Language);
         Assert.Equal(AppTheme.Light, theme.Theme);
         Assert.Equal([AppTheme.Light], theme.Applied);
         Assert.Equal(new UiSettings(AppLanguage.Russian, AppTheme.Light), store.Load());
-        Assert.Equal("10 шт.", screens.Order.QuantityText);
+        Assert.Equal("Сохранить и продолжить", wizard.Wizard.PrimaryActionText);
     }
 
     private IEnumerable<string?> Errors(string propertyName) =>
-        screens.Preferences.GetErrors(propertyName).Select(result => result.ErrorMessage);
+        wizard.Preferences.GetErrors(propertyName).Select(result => result.ErrorMessage);
 }

@@ -4,49 +4,58 @@ using Altium.PcbManufacturing.Models;
 using Altium.PcbManufacturing.Services;
 using Altium.PcbManufacturing.Settings;
 using Altium.PcbManufacturing.ViewModels;
+using Altium.PcbManufacturing.ViewModels.Factories;
 
 namespace Altium.PcbManufacturing.Tests;
 
 /// <summary>
-/// The Preferences and Quote screens wired to one shared state and one workflow, as the composition root wires them,
-/// but with a fake confirmation dialog and a private <see cref="Localizer"/>.
+/// The wizard, its step factories and the shared draft, wired as the composition root wires them, but with a fake
+/// confirmation dialog and a private <see cref="Localizer"/>.
 /// </summary>
-internal sealed class TestScreens
+internal sealed class TestWizard
 {
-    public TestScreens(PcbCatalog? catalog = null)
+    public TestWizard(PcbCatalog? catalog = null)
     {
         Catalog = catalog ?? TestCatalogs.Create();
-        State = new ManufacturingPreferences(Catalog);
-        PcbPricingService pricing = new(Catalog);
-        Preferences = new PreferencesViewModel(Catalog, State, pricing, Navigation, Confirmation, Localizer);
-        Quote = new QuoteViewModel(Catalog, State, pricing, Navigation, Localizer);
-        Order = new OrderViewModel(Catalog, State, Preferences, pricing, Navigation, Confirmation, Localizer);
+        Pricing = new PcbPricingService(Catalog);
+        PreferencesFactory = new PreferencesViewModelFactory(Catalog, Confirmation, Localizer);
+        QuoteFactory = new QuoteViewModelFactory(Catalog, Localizer);
+        OrderFactory = new OrderViewModelFactory(Catalog, Confirmation, Localizer);
+        Wizard = new OrderWizardViewModel(Catalog, Pricing, PreferencesFactory, QuoteFactory, OrderFactory, Localizer);
     }
 
     public PcbCatalog Catalog { get; }
 
-    public ManufacturingPreferences State { get; }
+    public PcbPricingService Pricing { get; }
 
-    public WorkflowNavigationState Navigation { get; } = new();
+    public ManufacturingOrderDraft Draft => Wizard.Preferences.Draft;
 
     public FakeConfirmationService Confirmation { get; } = new();
 
     public Localizer Localizer { get; } = new();
 
-    public PreferencesViewModel Preferences { get; }
+    public PreferencesViewModelFactory PreferencesFactory { get; }
 
-    public QuoteViewModel Quote { get; }
+    public QuoteViewModelFactory QuoteFactory { get; }
 
-    public OrderViewModel Order { get; }
+    public OrderViewModelFactory OrderFactory { get; }
+
+    public OrderWizardViewModel Wizard { get; }
+
+    public PreferencesViewModel Preferences => Wizard.Preferences;
+
+    public QuoteViewModel Quote => Wizard.Quote;
+
+    public OrderViewModel Order => Wizard.Order;
 
     /// <summary>
     /// Enters the only required value the defaults lack and saves, which opens Quote.
     /// </summary>
     public void CompletePreferences()
     {
-        Preferences.Postcode = "55-220";
-        Preferences.SaveAndContinueCommand.Execute(null);
-        Assert.Equal(WorkflowStep.Quote, Navigation.CurrentStep);
+        Preferences.PostcodeInput = "55-220";
+        Assert.True(Wizard.SubmitPreferences());
+        Assert.Equal(WorkflowStep.Quote, Wizard.CurrentStep);
     }
 
     /// <summary>
@@ -55,8 +64,27 @@ internal sealed class TestScreens
     public void CompleteQuote()
     {
         CompletePreferences();
-        Quote.ContinueToOrderCommand.Execute(null);
-        Assert.Equal(WorkflowStep.Order, Navigation.CurrentStep);
+        Assert.True(Wizard.ContinueToOrder());
+        Assert.Equal(WorkflowStep.Order, Wizard.CurrentStep);
+    }
+
+    /// <summary>
+    /// Completes every step, confirming the order.
+    /// </summary>
+    public async Task CompleteOrderAsync()
+    {
+        CompleteQuote();
+        Assert.True(await Wizard.PlaceOrderAsync());
+        Assert.True(Wizard.IsCompleted);
+    }
+
+    /// <summary>
+    /// Runs the footer's primary action as a bound button does: only when it can execute.
+    /// </summary>
+    public Task ClickPrimaryAsync()
+    {
+        Assert.True(Wizard.PrimaryActionCommand.CanExecute(null), "The primary action is disabled.");
+        return Wizard.PrimaryActionCommand.ExecuteAsync(null);
     }
 }
 

@@ -1,67 +1,59 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.Globalization;
-using Altium.PcbManufacturing.Formatting;
+using System.Runtime.CompilerServices;
 using Altium.PcbManufacturing.Localization;
 using Altium.PcbManufacturing.Models;
 using Altium.PcbManufacturing.Services;
+using Altium.PcbManufacturing.Validation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using PolishPostcode = Altium.PcbManufacturing.Validation.PolishPostcode;
 
 namespace Altium.PcbManufacturing.ViewModels;
 
 /// <summary>
-/// Preferences tab: exposes the catalog options and edits the shared <see cref="ManufacturingPreferences"/>.
+/// Preferences step: the catalog options, the text the user types, its validation feedback, and Reset to Defaults.
 /// </summary>
 
 public sealed partial class PreferencesViewModel : ObservableValidator
 {
-    public const int ProjectNameMaxLength = 50;
-    public const int NotesMaxLength = 300;
-
-    private readonly ManufacturingPreferences preferences;
-    private readonly PcbPricingService pricing;
-    private readonly WorkflowNavigationState navigation;
     private readonly IConfirmationService confirmation;
     private readonly Localizer localizer;
 
-    private string quantityInput;
+    private string projectNameInput = string.Empty;
+    private string postcodeInput = string.Empty;
+    private string quantityInput = string.Empty;
+    private string notesInput = string.Empty;
 
-    // Incremented on each rejected Save & Continue; the view moves focus to the first invalid field when it changes.
+    // Incremented on each rejected submission; the view moves focus to the first invalid field when it changes.
     [ObservableProperty]
     private int invalidSubmitCount;
 
+    [ObservableProperty]
+    private bool isInputValid;
+
     public PreferencesViewModel(
         PcbCatalog catalog,
-        ManufacturingPreferences preferences,
-        PcbPricingService pricing,
-        WorkflowNavigationState navigation,
+        ManufacturingOrderDraft draft,
         IConfirmationService confirmation,
         Localizer localizer)
     {
         ArgumentNullException.ThrowIfNull(catalog);
-        ArgumentNullException.ThrowIfNull(preferences);
-        ArgumentNullException.ThrowIfNull(pricing);
-        ArgumentNullException.ThrowIfNull(navigation);
+        ArgumentNullException.ThrowIfNull(draft);
         ArgumentNullException.ThrowIfNull(confirmation);
         ArgumentNullException.ThrowIfNull(localizer);
 
         Materials = catalog.Materials;
         SolderMaskColors = catalog.SolderMaskColors;
         BoardThicknesses = catalog.BoardThicknesses;
-
-        this.pricing = pricing;
-        this.navigation = navigation;
+        Draft = draft;
         this.confirmation = confirmation;
         this.localizer = localizer;
         this.localizer.PropertyChanged += OnLocalizerPropertyChanged;
-        this.preferences = preferences;
-        this.preferences.PropertyChanged += OnPreferencesPropertyChanged;
-        quantityInput = FormatQuantity(preferences.Quantity);
         ErrorsChanged += OnErrorsChanged;
-        this.navigation.SetReadinessCheck(WorkflowStep.Preferences, AreAllFieldsValid);
+        ResetInput();
     }
+
+    public ManufacturingOrderDraft Draft { get; }
 
     public IReadOnlyList<PcbMaterial> Materials { get; }
 
@@ -74,88 +66,57 @@ public sealed partial class PreferencesViewModel : ObservableValidator
     /// length are checked.
     /// </summary>
     [Required(ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.Validation_ProjectNameRequired))]
-    [StringLength(ProjectNameMaxLength, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.Validation_MaxLength))]
-    public string ProjectName
+    [StringLength(OrderInputRules.ProjectNameMaxLength, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.Validation_MaxLength))]
+    public string ProjectNameInput
     {
-        get => preferences.ProjectName;
-        set => preferences.ProjectName = value ?? string.Empty;
+        get => projectNameInput;
+        set
+        {
+            if (SetInput(ref projectNameInput, value))
+            {
+                OnPropertyChanged(nameof(IsProjectNameBlank));
+                Draft.ProjectName = projectNameInput;
+            }
+        }
     }
 
     /// <summary>
-    /// The postcode as typed. The raw text is stored in the shared state even when invalid, so the user's input is never
-    /// lost; consumers such as the future Order step must check it with <see cref="PolishPostcode.IsValid"/>.
+    /// The postcode as typed. It is written to the draft even when invalid, so the user's input is never lost; whether
+    /// it is valid is reported here and by <see cref="IsInputValid"/>.
     /// </summary>
     [Required(ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.Validation_PostcodeRequired))]
     [RegularExpression(PolishPostcode.Pattern, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.Validation_PostcodeFormat))]
-    public string Postcode
+    public string PostcodeInput
     {
-        get => preferences.Postcode;
-        set => preferences.Postcode = value ?? string.Empty;
+        get => postcodeInput;
+        set
+        {
+            if (SetInput(ref postcodeInput, value))
+            {
+                OnPropertyChanged(nameof(IsPostcodeBlank));
+                Draft.Postcode = postcodeInput;
+            }
+        }
     }
 
     /// <summary>
     /// The board quantity as typed. Any text is accepted and kept, so invalid input is never lost or thrown away by the
-    /// binding; only a valid whole number (see <see cref="TryParseQuantity"/>) is written to the shared state.
+    /// binding; only a valid whole number (see <see cref="OrderInputRules.TryParseQuantity"/>) is written to the draft.
     /// </summary>
     [Required(ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.Validation_QuantityRequired))]
-    [CustomValidation(typeof(PreferencesViewModel), nameof(ValidateQuantity))]
+    [CustomValidation(typeof(OrderInputRules), nameof(OrderInputRules.ValidateQuantity))]
     public string QuantityInput
     {
         get => quantityInput;
         set
         {
-            if (!SetProperty(ref quantityInput, value ?? string.Empty, validate: true))
+            if (SetInput(ref quantityInput, value))
             {
-                return;
-            }
-
-            OnPropertyChanged(nameof(IsQuantityBlank));
-            if (TryParseQuantity(quantityInput, out int quantity))
-            {
-                preferences.Quantity = quantity;
-            }
-        }
-    }
-
-    public bool HasProjectNameErrors => GetErrors(nameof(ProjectName)).Any();
-
-    public bool HasPostcodeErrors => GetErrors(nameof(Postcode)).Any();
-
-    public bool HasQuantityErrors => GetErrors(nameof(QuantityInput)).Any();
-
-    public bool IsProjectNameBlank => string.IsNullOrWhiteSpace(ProjectName);
-
-    public bool IsPostcodeBlank => string.IsNullOrWhiteSpace(Postcode);
-
-    public bool IsQuantityBlank => string.IsNullOrWhiteSpace(QuantityInput);
-
-    public PcbMaterial SelectedMaterial
-    {
-        get => preferences.SelectedMaterial;
-        set => preferences.SelectedMaterial =
-            value ?? throw new ArgumentNullException(nameof(value));
-    }
-
-    public SolderMaskColor? SelectedSolderMaskColor
-    {
-        get => preferences.SelectedSolderMaskColor;
-        set
-        {
-            if (value is not null)
-            {
-                preferences.SelectedSolderMaskColor = value;
-            }
-        }
-    }
-
-    public BoardThickness? SelectedBoardThickness
-    {
-        get => preferences.SelectedBoardThickness;
-        set
-        {
-            if (value is not null)
-            {
-                preferences.SelectedBoardThickness = value;
+                OnPropertyChanged(nameof(IsQuantityBlank));
+                if (OrderInputRules.TryParseQuantity(quantityInput, out int quantity))
+                {
+                    Draft.Quantity = quantity;
+                }
             }
         }
     }
@@ -163,112 +124,39 @@ public sealed partial class PreferencesViewModel : ObservableValidator
     /// <summary>
     /// Optional order notes; validated on every change. Line breaks count as typed (a TextBox Enter inserts CR LF).
     /// </summary>
-    [StringLength(NotesMaxLength, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.Validation_MaxLength))]
-    public string Notes
+    [StringLength(OrderInputRules.NotesMaxLength, ErrorMessageResourceType = typeof(Strings), ErrorMessageResourceName = nameof(Strings.Validation_MaxLength))]
+    public string NotesInput
     {
-        get => preferences.Notes;
-        set => preferences.Notes = value ?? string.Empty;
+        get => notesInput;
+        set
+        {
+            if (SetInput(ref notesInput, value))
+            {
+                OnPropertyChanged(nameof(NotesCounterText));
+                Draft.Notes = notesInput;
+            }
+        }
     }
+
+    public bool HasProjectNameErrors => GetErrors(nameof(ProjectNameInput)).Any();
+
+    public bool HasPostcodeErrors => GetErrors(nameof(PostcodeInput)).Any();
+
+    public bool HasQuantityErrors => GetErrors(nameof(QuantityInput)).Any();
+
+    public bool IsProjectNameBlank => string.IsNullOrWhiteSpace(ProjectNameInput);
+
+    public bool IsPostcodeBlank => string.IsNullOrWhiteSpace(PostcodeInput);
+
+    public bool IsQuantityBlank => string.IsNullOrWhiteSpace(QuantityInput);
 
     /// <summary>
     /// Character counter shown below the notes field, e.g. <c>12 / 300</c>; it reflects the actual string length.
     /// </summary>
-    public string NotesCounterText => $"{Notes.Length} / {NotesMaxLength}";
+    public string NotesCounterText => $"{NotesInput.Length} / {OrderInputRules.NotesMaxLength}";
 
     /// <summary>
-    /// Localized board count of the stored quantity, e.g. <c>10 pcs</c> or <c>10 шт.</c>.
-    /// </summary>
-    public string QuantityText => localizer.Format("Boards_Format", preferences.Quantity);
-
-    /// <summary>
-    /// Estimated price for the selected material and the stored (last valid) quantity.
-    /// </summary>
-    public PriceEstimate PriceEstimate => pricing.Estimate(SelectedMaterial, preferences.Quantity);
-
-    public string BaseUnitPriceText => UsdFormat.Format(pricing.BaseUnitPrice);
-
-    /// <summary>
-    /// The selected material's impact on the price of one board, e.g. <c>+$208.60</c>, or the localized "Included"
-    /// when there is none.
-    /// </summary>
-    public string MaterialSurchargePerUnitText =>
-        UsdFormat.FormatSurcharge(PriceEstimate.MaterialSurchargePerUnit, localizer[nameof(Strings.Pricing_Included)]);
-
-    /// <summary>
-    /// The indicator beside the material selector: the selected material's extra cost per board, e.g.
-    /// <c>+$37.25 / board</c>, or the localized "Included" when there is none.
-    /// </summary>
-    public string MaterialSurchargeText =>
-        PriceEstimate.MaterialSurchargePerUnit == 0
-            ? localizer[nameof(Strings.Pricing_Included)]
-            : localizer.Format(nameof(Strings.Pricing_SurchargePerBoard), UsdFormat.Format(PriceEstimate.MaterialSurchargePerUnit));
-
-    public string EstimatedUnitPriceText => UsdFormat.Format(PriceEstimate.EstimatedUnitPrice);
-
-    public string EstimatedTotalPriceText => UsdFormat.Format(PriceEstimate.EstimatedTotalPrice);
-
-    /// <summary>
-    /// The production time as localized text, e.g. <c>12 days</c> or <c>12 дней</c>.
-    /// </summary>
-    public string EstimatedProductionTimeText => localizer.Format("Days_Format", SelectedMaterial.ProductionDays);
-
-    /// <summary>
-    /// Restores the default preferences, asking first when that would discard changes.
-    /// </summary>
-    [RelayCommand]
-    private void ResetToDefaults()
-    {
-        bool matchesDefaults = preferences.MatchesDefaults() && QuantityInput == FormatQuantity(ManufacturingPreferences.DefaultQuantity);
-        if (!matchesDefaults && !confirmation.Confirm(
-                localizer[nameof(Strings.Reset_ConfirmTitle)], localizer[nameof(Strings.Reset_ConfirmMessage)]))
-        {
-            return;
-        }
-
-        RestoreDefaults();
-    }
-
-    /// <summary>
-    /// Restores the default preferences without asking, and clears every validation message, as for a fresh start.
-    /// </summary>
-    public void RestoreDefaults()
-    {
-        preferences.ResetToDefaults();
-        SyncQuantityInput();
-        ClearErrors();
-    }
-
-    /// <summary>
-    /// Validation for <see cref="QuantityInput"/>; blank text is left to <see cref="RequiredAttribute"/>.
-    /// </summary>
-    public static ValidationResult? ValidateQuantity(string? text, ValidationContext context)
-    {
-        if (string.IsNullOrWhiteSpace(text) || TryParseQuantity(text, out _))
-        {
-            return ValidationResult.Success;
-        }
-
-        return new ValidationResult(
-            IsQuantityTooLarge(text) ? Strings.Validation_QuantityTooLarge : Strings.Validation_QuantityWholeNumber,
-            [context.MemberName ?? nameof(QuantityInput)]);
-    }
-
-    /// <summary>
-    /// Validates every field and, when all are valid, completes the Preferences step: Quote is unlocked and opened.
-    /// </summary>
-    /// <remarks>Nothing is written to disk; the preferences stay in the shared state for this session.</remarks>
-    [RelayCommand]
-    private void SaveAndContinue()
-    {
-        if (ValidateAndShowErrors())
-        {
-            navigation.CompleteStep(WorkflowStep.Preferences);
-        }
-    }
-
-    /// <summary>
-    /// Explicit validation, as for Save &amp; Continue: every field is validated with visible messages and, if any is
-    /// invalid, the view is asked to focus the first error. Place Order uses it to re-check the current input.
+    /// Validates every field with visible messages and, if any is invalid, asks the view to focus the first error.
     /// </summary>
     /// <returns>Whether every field is valid.</returns>
     public bool ValidateAndShowErrors()
@@ -283,63 +171,63 @@ public sealed partial class PreferencesViewModel : ObservableValidator
         return true;
     }
 
-    private bool AreAllFieldsValid() =>
-        Validator.TryValidateObject(this, new ValidationContext(this), validationResults: null, validateAllProperties: true);
-
-    private void OnPreferencesPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    /// <summary>
+    /// Discards the typed input and its validation messages and shows the draft's current values, as for a fresh start:
+    /// nothing is reported until a field is edited or the step is submitted.
+    /// </summary>
+    public void ResetInput()
     {
-        switch (e.PropertyName)
-        {
-            case nameof(ManufacturingPreferences.ProjectName):
-                OnPropertyChanged(nameof(ProjectName));
-                OnPropertyChanged(nameof(IsProjectNameBlank));
-                ValidateProperty(ProjectName, nameof(ProjectName));
-                break;
-            case nameof(ManufacturingPreferences.Postcode):
-                OnPropertyChanged(nameof(Postcode));
-                OnPropertyChanged(nameof(IsPostcodeBlank));
-                ValidateProperty(Postcode, nameof(Postcode));
-                break;
-            case nameof(ManufacturingPreferences.Notes):
-                OnPropertyChanged(nameof(Notes));
-                OnPropertyChanged(nameof(NotesCounterText));
-                ValidateProperty(Notes, nameof(Notes));
-                break;
-            case nameof(ManufacturingPreferences.Quantity):
-                SyncQuantityInput();
-                OnPropertyChanged(nameof(QuantityText));
-                OnPropertyChanged(nameof(PriceEstimate));
-                OnPropertyChanged(nameof(EstimatedTotalPriceText));
-                break;
-            case nameof(ManufacturingPreferences.SelectedMaterial):
-                OnPropertyChanged(nameof(SelectedMaterial));
-                OnPropertyChanged(nameof(PriceEstimate));
-                OnPropertyChanged(nameof(MaterialSurchargeText));
-                OnPropertyChanged(nameof(MaterialSurchargePerUnitText));
-                OnPropertyChanged(nameof(EstimatedUnitPriceText));
-                OnPropertyChanged(nameof(EstimatedTotalPriceText));
-                OnPropertyChanged(nameof(EstimatedProductionTimeText));
-                break;
-            case nameof(ManufacturingPreferences.SelectedSolderMaskColor):
-                OnPropertyChanged(nameof(SelectedSolderMaskColor));
-                break;
-            case nameof(ManufacturingPreferences.SelectedBoardThickness):
-                OnPropertyChanged(nameof(SelectedBoardThickness));
-                break;
-        }
+        projectNameInput = Draft.ProjectName;
+        postcodeInput = Draft.Postcode;
+        quantityInput = OrderInputRules.FormatQuantity(Draft.Quantity);
+        notesInput = Draft.Notes;
+        ClearErrors();
+        UpdateInputValidity();
+
+        OnPropertyChanged(nameof(ProjectNameInput));
+        OnPropertyChanged(nameof(PostcodeInput));
+        OnPropertyChanged(nameof(QuantityInput));
+        OnPropertyChanged(nameof(NotesInput));
+        OnPropertyChanged(nameof(IsProjectNameBlank));
+        OnPropertyChanged(nameof(IsPostcodeBlank));
+        OnPropertyChanged(nameof(IsQuantityBlank));
+        OnPropertyChanged(nameof(NotesCounterText));
     }
 
-    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    /// <summary>
+    /// Restores the default order values, asking first when that would discard changes.
+    /// </summary>
+    [RelayCommand]
+    private void ResetToDefaults()
     {
-        base.OnPropertyChanged(e);
-        if (e.PropertyName is nameof(ProjectName) or nameof(Postcode) or nameof(QuantityInput) or nameof(Notes))
+        bool matchesDefaults = Draft.MatchesDefaults() && QuantityInput == OrderInputRules.FormatQuantity(Draft.Quantity);
+        if (!matchesDefaults && !confirmation.Confirm(
+                localizer[nameof(Strings.Reset_ConfirmTitle)], localizer[nameof(Strings.Reset_ConfirmMessage)]))
         {
-            navigation.RefreshAvailability();
+            return;
         }
+
+        Draft.ResetToDefaults();
+        ResetInput();
     }
 
-    // Localized texts follow the language. Fields that currently show an error are re-validated so the message is
-    // re-created in the new language; untouched fields stay unvalidated.
+    private bool SetInput(ref string field, string? value, [CallerMemberName] string propertyName = "")
+    {
+        if (!SetProperty(ref field, value ?? string.Empty, validate: true, propertyName))
+        {
+            return false;
+        }
+
+        UpdateInputValidity();
+        return true;
+    }
+
+    // Side-effect free: no validation messages are shown for fields the user has not touched yet.
+    private void UpdateInputValidity() =>
+        IsInputValid = Validator.TryValidateObject(this, new ValidationContext(this), validationResults: null, validateAllProperties: true);
+
+    // Fields that currently show an error are re-validated so the message is re-created in the new language; untouched
+    // fields stay unvalidated.
     private void OnLocalizerPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(Localizer.Language))
@@ -347,42 +235,10 @@ public sealed partial class PreferencesViewModel : ObservableValidator
             return;
         }
 
-        OnPropertyChanged(nameof(QuantityText));
-        OnPropertyChanged(nameof(MaterialSurchargeText));
-        OnPropertyChanged(nameof(MaterialSurchargePerUnitText));
-        OnPropertyChanged(nameof(EstimatedProductionTimeText));
-        RevalidateIfInvalid(ProjectName, nameof(ProjectName));
-        RevalidateIfInvalid(Postcode, nameof(Postcode));
+        RevalidateIfInvalid(ProjectNameInput, nameof(ProjectNameInput));
+        RevalidateIfInvalid(PostcodeInput, nameof(PostcodeInput));
         RevalidateIfInvalid(QuantityInput, nameof(QuantityInput));
-        RevalidateIfInvalid(Notes, nameof(Notes));
-    }
-
-    private static string FormatQuantity(int quantity) => quantity.ToString(CultureInfo.InvariantCulture);
-
-    private static bool TryParseQuantity(string? text, out int quantity)
-    {
-        quantity = 0;
-        return IsDigitsOnly(text)
-            && int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out quantity)
-            && quantity > 0;
-    }
-
-    private static bool IsQuantityTooLarge(string? text) =>
-        IsDigitsOnly(text) && text!.Any(c => c != '0') && !int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out _);
-
-    private static bool IsDigitsOnly(string? text) => !string.IsNullOrEmpty(text) && text.All(char.IsAsciiDigit);
-
-    private void SyncQuantityInput()
-    {
-        if (TryParseQuantity(quantityInput, out int typed) && typed == preferences.Quantity)
-        {
-            return;
-        }
-
-        quantityInput = FormatQuantity(preferences.Quantity);
-        OnPropertyChanged(nameof(QuantityInput));
-        OnPropertyChanged(nameof(IsQuantityBlank));
-        ValidateProperty(quantityInput, nameof(QuantityInput));
+        RevalidateIfInvalid(NotesInput, nameof(NotesInput));
     }
 
     private void RevalidateIfInvalid(object value, string propertyName)
@@ -397,10 +253,10 @@ public sealed partial class PreferencesViewModel : ObservableValidator
     {
         switch (e.PropertyName)
         {
-            case nameof(ProjectName):
+            case nameof(ProjectNameInput):
                 OnPropertyChanged(nameof(HasProjectNameErrors));
                 break;
-            case nameof(Postcode):
+            case nameof(PostcodeInput):
                 OnPropertyChanged(nameof(HasPostcodeErrors));
                 break;
             case nameof(QuantityInput):

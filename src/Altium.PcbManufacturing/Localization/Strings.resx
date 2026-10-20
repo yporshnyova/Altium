@@ -163,7 +163,7 @@
     <value>Board thickness</value>
   </data>
   <data name="Preferences_ProductionTimeHint" xml:space="preserve">
-    <value>Estimated production time: {0}</value>
+    <value>Estimated production time: {0} days</value>
   </data>
   <data name="Preferences_AdditionalDetails" xml:space="preserve">
     <value>Additional details</value>
