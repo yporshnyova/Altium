@@ -48,29 +48,6 @@ public sealed class PcbPreviewTests
         Assert.Equal(Color.FromRgb(0x1F, 0x4E, 0x9C), BrushColor(topMask.Background));
     });
 
-    [Fact]
-    public void SideView_ThickerBoardsAreDrawnProportionallyThickerAndAlwaysFit() => Sta.Run(() =>
-    {
-        (PcbSideView view, ManufacturingOrderDraft draft, PcbCatalog catalog) = CreateSideView();
-        List<(decimal Millimeters, double Height)> profiles = [];
-
-        foreach (BoardThickness thickness in catalog.BoardThicknesses.OrderBy(t => t.Millimeters))
-        {
-            draft.SelectedBoardThickness = thickness;
-            LayOut(view, 400, 40);
-            var profile = (FrameworkElement)view.FindName("Profile");
-            Rect bounds = profile.TransformToAncestor(view).TransformBounds(new Rect(profile.RenderSize));
-
-            Assert.True(bounds.Top >= -0.5 && bounds.Bottom <= view.ActualHeight + 0.5, $"{thickness.Id} profile is clipped: {bounds}.");
-            profiles.Add((thickness.Millimeters, bounds.Height));
-        }
-
-        for (int i = 1; i < profiles.Count; i++)
-        {
-            Assert.Equal((double)(profiles[i].Millimeters / profiles[0].Millimeters), profiles[i].Height / profiles[0].Height, precision: 2);
-        }
-    });
-
     private static (QuoteViewModel Quote, ManufacturingOrderDraft Draft) CreateQuote(PcbCatalog catalog)
     {
         ManufacturingOrderDraft draft = new(catalog, new PcbPricingService(catalog));

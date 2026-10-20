@@ -13,6 +13,14 @@
     d:DesignWidth="960"
     mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="OrderView.Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <!--  Scrolling content; the navigation footer (Place Order, New Order) belongs to the main window.  -->
     <ScrollViewer
         Focusable="False"
@@ -31,25 +39,12 @@
 
             <Border
                 Grid.Row="0"
+                Grid.Column="0"
                 Grid.ColumnSpan="3"
                 Margin="{StaticResource CardGapMargin}"
-                Padding="16,12"
                 AutomationProperties.LiveSetting="Polite"
                 AutomationProperties.Name="{loc:Text Order_PlacedTitle}"
-                Background="{DynamicResource ItemSelectedBackgroundBrush}"
-                BorderBrush="{DynamicResource AccentBrush}"
-                BorderThickness="1"
-                CornerRadius="6">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding DataContext.Wizard.IsCompleted, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}" Value="True">
-                                <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
+                Style="{StaticResource OrderPlacedBannerStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -104,25 +99,26 @@
 
                     <TextBlock
                         Grid.Row="0"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource SectionHeaderTextStyle}"
                         Text="{loc:Text Order_Summary}" />
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="1"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource HintTextStyle}"
                         Text="{loc:Text Order_ReviewHint}" />
 
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="2"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource SummarySectionTextStyle}"
                         Text="{loc:Text Summary_Project}" />
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="3"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_ProjectName}" />
                     <TextBlock
@@ -131,8 +127,8 @@
                         Style="{StaticResource SummaryValueTextStyle}"
                         Text="{Binding Draft.ProjectName, Mode=OneWay}" />
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="4"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Order_DeliveryPostcode}" />
                     <TextBlock
@@ -141,40 +137,29 @@
                         Style="{StaticResource SummaryValueTextStyle}"
                         Text="{Binding Draft.Postcode, Mode=OneWay}" />
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="5"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Preferences_Notes}" />
-                    <TextBlock Grid.Row="5" Grid.Column="1">
-                        <TextBlock.Style>
-                            <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
-                                <Setter Property="Text" Value="{Binding Draft.Notes, Mode=OneWay}" />
-                                <Style.Triggers>
-                                    <!--  "Not entered" is a placeholder, not a value.  -->
-                                    <DataTrigger Binding="{Binding Draft.HasNotes, Mode=OneWay}" Value="False">
-                                        <Setter Property="Text" Value="{loc:Text Summary_NotEntered}" />
-                                        <Setter Property="FontWeight" Value="Normal" />
-                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <TextBlock
+                        Grid.Row="5"
+                        Grid.Column="1"
+                        Style="{StaticResource NotesValueTextStyle}" />
 
                     <Border
-                        Grid.Column="0"
                         Grid.Row="6"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource DividerStyle}" />
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="7"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource SummarySectionTextStyle}"
                         Text="{loc:Text Summary_Board}" />
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="8"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_Quantity}" />
                     <TextBlock
@@ -184,8 +169,8 @@
                         Text="{loc:Format Boards_Format,
                                           Path=Draft.Quantity}" />
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="9"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Order_SizeAndLayers}" />
                     <TextBlock
@@ -194,8 +179,8 @@
                         Style="{StaticResource SummaryValueTextStyle}"
                         Text="{Binding BoardSpecificationText, Mode=OneWay}" />
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="10"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_Material}" />
                     <TextBlock
@@ -204,8 +189,8 @@
                         Style="{StaticResource SummaryValueTextStyle}"
                         Text="{Binding Draft.SelectedMaterial.Name, Mode=OneWay}" />
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="11"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_SolderMask}" />
                     <StackPanel
@@ -223,8 +208,8 @@
                                                    NamePath=Draft.SelectedSolderMaskColor.Name}" />
                     </StackPanel>
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="12"
+                        Grid.Column="0"
                         Margin="0,0,16,14"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_BoardThickness}" />
@@ -259,12 +244,13 @@
 
                     <TextBlock
                         Grid.Row="0"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource SectionHeaderTextStyle}"
                         Text="{loc:Text Summary_PricingAndProduction}" />
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="1"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_EstimatedUnitPrice}" />
                     <TextBlock
@@ -277,6 +263,7 @@
                     </TextBlock>
                     <TextBlock
                         Grid.Row="2"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_EstimatedProductionTime}" />
                     <TextBlock
@@ -286,13 +273,13 @@
                         Text="{loc:Format Days_Format,
                                           Path=Draft.ProductionDays}" />
                     <Border
-                        Grid.Column="0"
                         Grid.Row="3"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource DividerStyle}" />
                     <TextBlock
-                        Grid.Column="0"
                         Grid.Row="4"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryTotalLabelTextStyle}"
                         Text="{loc:Text Summary_EstimatedTotal}" />
                     <TextBlock
@@ -301,8 +288,8 @@
                         Style="{StaticResource SummaryTotalValueTextStyle}"
                         Text="{Binding Draft.TotalPrice, Mode=OneWay, Converter={converters:UsdConverter}}" />
                     <Grid
-                        Grid.Column="0"
                         Grid.Row="5"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Margin="0,4,0,0">
                         <Grid.ColumnDefinitions>

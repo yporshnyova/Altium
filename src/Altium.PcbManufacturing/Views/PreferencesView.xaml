@@ -8,7 +8,6 @@
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:loc="clr-namespace:Altium.PcbManufacturing.Views.Markup"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:models="clr-namespace:Altium.PcbManufacturing.Models"
     xmlns:validation="clr-namespace:Altium.PcbManufacturing.Validation"
     xmlns:vm="clr-namespace:Altium.PcbManufacturing.ViewModels"
     d:DataContext="{d:DesignInstance Type=vm:PreferencesViewModel}"
@@ -16,19 +15,13 @@
     d:DesignWidth="960"
     mc:Ignorable="d">
 
+    <!--  SolderMaskColorTemplate is shared (Resources/Templates/CatalogTemplates.xaml) with the Quote legend.  -->
     <UserControl.Resources>
-        <!--  Shared by the selector and the summary so both present an option identically.  -->
-        <DataTemplate x:Key="SolderMaskColorTemplate" DataType="{x:Type models:SolderMaskColor}">
-            <StackPanel Orientation="Horizontal">
-                <!--  The catalog's #RRGGBB string is converted to a Brush by WPF's built-in BrushConverter.  -->
-                <Border Background="{Binding HexColor, Mode=OneWay}" Style="{StaticResource ColorSwatchStyle}" />
-                <TextBlock VerticalAlignment="Center" Text="{loc:CatalogName SolderMaskColor}" />
-            </StackPanel>
-        </DataTemplate>
-
-        <DataTemplate x:Key="BoardThicknessTemplate" DataType="{x:Type models:BoardThickness}">
-            <TextBlock Text="{loc:Format Thickness_Millimeters, Path=Millimeters}" />
-        </DataTemplate>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="PreferencesView.Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <!--  Scrolling content; the navigation footer (with Reset to Defaults) belongs to the main window.  -->
@@ -73,6 +66,7 @@
 
                         <TextBlock
                             Grid.Row="0"
+                            Grid.Column="0"
                             Grid.ColumnSpan="3"
                             Style="{StaticResource SectionHeaderTextStyle}"
                             Text="{loc:Text Preferences_ProjectBasics}" />
@@ -178,6 +172,7 @@
 
                         <TextBlock
                             Grid.Row="0"
+                            Grid.Column="0"
                             Grid.ColumnSpan="3"
                             Style="{StaticResource SectionHeaderTextStyle}"
                             Text="{loc:Text Preferences_BoardPreferences}" />
@@ -213,18 +208,8 @@
                             x:Name="MaterialSurchargeText"
                             Grid.Row="1"
                             Grid.Column="2"
-                            MinWidth="72">
-                            <TextBlock.Style>
-                                <Style BasedOn="{StaticResource SurchargeTextStyle}" TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{loc:Format Pricing_SurchargePerBoard, Path=Draft.PriceEstimate.MaterialSurchargePerUnit, Converter={converters:UsdConverter}}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Draft.PriceEstimate.MaterialSurchargePerUnit, Mode=OneWay}" Value="0">
-                                            <Setter Property="Text" Value="{loc:Text Pricing_Included}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                            MinWidth="72"
+                            Style="{StaticResource MaterialSurchargeFieldTextStyle}" />
                         <TextBlock
                             Grid.Row="2"
                             Grid.Column="1"
@@ -301,6 +286,7 @@
 
                         <TextBlock
                             Grid.Row="0"
+                            Grid.Column="0"
                             Grid.ColumnSpan="3"
                             Style="{StaticResource SectionHeaderTextStyle}"
                             Text="{loc:Text Preferences_AdditionalDetails}" />
@@ -378,6 +364,7 @@
 
                     <TextBlock
                         Grid.Row="0"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource SectionHeaderTextStyle}"
                         Text="{loc:Text Summary_Title}" />
@@ -385,72 +372,48 @@
                     <!--  Project  -->
                     <TextBlock
                         Grid.Row="1"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource SummarySectionTextStyle}"
                         Text="{loc:Text Summary_Project}" />
 
-                    <!--
-                        The summary shows the draft; the draft reports no errors, so there is no error adorner here
-                        and the invalid state (from the step's validation) is stated in text instead. Later triggers
-                        win for Text: a blank value reads "Not entered" even while invalid.
-                    -->
+                    <!--  Values that can be invalid or blank say so in text; see the styles for the rules.  -->
                     <TextBlock
                         Grid.Row="2"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_ProjectName}" />
-                    <TextBlock Grid.Row="2" Grid.Column="1">
-                        <TextBlock.Style>
-                            <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
-                                <Setter Property="Text" Value="{Binding Draft.ProjectName, Mode=OneWay}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasProjectNameErrors, Mode=OneWay}" Value="True">
-                                        <Setter Property="Text" Value="{loc:Format Summary_InvalidValue, Path=Draft.ProjectName}" />
-                                        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsProjectNameBlank, Mode=OneWay}" Value="True">
-                                        <Setter Property="Text" Value="{loc:Text Summary_NotEntered}" />
-                                        <Setter Property="FontWeight" Value="Normal" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <TextBlock
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        Style="{StaticResource ProjectNameSummaryValueTextStyle}" />
 
                     <TextBlock
                         Grid.Row="3"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_Postcode}" />
-                    <TextBlock Grid.Row="3" Grid.Column="1">
-                        <TextBlock.Style>
-                            <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
-                                <Setter Property="Text" Value="{Binding Draft.Postcode, Mode=OneWay}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasPostcodeErrors, Mode=OneWay}" Value="True">
-                                        <Setter Property="Text" Value="{loc:Format Summary_InvalidValue, Path=Draft.Postcode}" />
-                                        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsPostcodeBlank, Mode=OneWay}" Value="True">
-                                        <Setter Property="Text" Value="{loc:Text Summary_NotEntered}" />
-                                        <Setter Property="FontWeight" Value="Normal" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <TextBlock
+                        Grid.Row="3"
+                        Grid.Column="1"
+                        Style="{StaticResource PostcodeSummaryValueTextStyle}" />
 
                     <!--  Board  -->
                     <Border
                         Grid.Row="4"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource DividerStyle}" />
                     <TextBlock
                         Grid.Row="5"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource SummarySectionTextStyle}"
                         Text="{loc:Text Summary_Board}" />
 
                     <TextBlock
                         Grid.Row="6"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_Material}" />
                     <TextBlock
@@ -461,6 +424,7 @@
 
                     <TextBlock
                         Grid.Row="7"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_SolderMask}" />
                     <ContentPresenter
@@ -473,6 +437,7 @@
 
                     <TextBlock
                         Grid.Row="8"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_BoardThickness}" />
                     <ContentPresenter
@@ -486,38 +451,29 @@
                     <!--  Pricing and production  -->
                     <Border
                         Grid.Row="9"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource DividerStyle}" />
                     <TextBlock
                         Grid.Row="10"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Style="{StaticResource SummarySectionTextStyle}"
                         Text="{loc:Text Summary_PricingAndProduction}" />
 
                     <TextBlock
                         Grid.Row="11"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_Quantity}" />
-                    <TextBlock Grid.Row="11" Grid.Column="1">
-                        <TextBlock.Style>
-                            <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
-                                <Setter Property="Text" Value="{loc:Format Boards_Format, Path=Draft.Quantity}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasQuantityErrors, Mode=OneWay}" Value="True">
-                                        <Setter Property="Text" Value="{loc:Format Summary_InvalidValue, Path=QuantityInput}" />
-                                        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsQuantityBlank, Mode=OneWay}" Value="True">
-                                        <Setter Property="Text" Value="{loc:Text Summary_NotEntered}" />
-                                        <Setter Property="FontWeight" Value="Normal" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <TextBlock
+                        Grid.Row="11"
+                        Grid.Column="1"
+                        Style="{StaticResource QuantitySummaryValueTextStyle}" />
 
                     <TextBlock
                         Grid.Row="12"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_BaseUnitPrice}" />
                     <TextBlock
@@ -528,23 +484,17 @@
 
                     <TextBlock
                         Grid.Row="13"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_MaterialSurchargePerUnit}" />
-                    <TextBlock Grid.Row="13" Grid.Column="1">
-                        <TextBlock.Style>
-                            <Style BasedOn="{StaticResource SummaryValueTextStyle}" TargetType="TextBlock">
-                                <Setter Property="Text" Value="{Binding Draft.PriceEstimate.MaterialSurchargePerUnit, Mode=OneWay, Converter={converters:UsdConverter}, StringFormat='+{0}'}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Draft.PriceEstimate.MaterialSurchargePerUnit, Mode=OneWay}" Value="0">
-                                        <Setter Property="Text" Value="{loc:Text Pricing_Included}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <TextBlock
+                        Grid.Row="13"
+                        Grid.Column="1"
+                        Style="{StaticResource MaterialSurchargeValueTextStyle}" />
 
                     <TextBlock
                         Grid.Row="14"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_EstimatedUnitPrice}" />
                     <TextBlock
@@ -556,23 +506,17 @@
                     <!--  While the quantity is invalid there is no total to show.  -->
                     <TextBlock
                         Grid.Row="15"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryTotalLabelTextStyle}"
                         Text="{loc:Text Summary_EstimatedTotal}" />
-                    <TextBlock Grid.Row="15" Grid.Column="1">
-                        <TextBlock.Style>
-                            <Style BasedOn="{StaticResource SummaryTotalValueTextStyle}" TargetType="TextBlock">
-                                <Setter Property="Text" Value="{Binding Draft.TotalPrice, Mode=OneWay, Converter={converters:UsdConverter}}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasQuantityErrors, Mode=OneWay}" Value="True">
-                                        <Setter Property="Text" Value="—" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <TextBlock
+                        Grid.Row="15"
+                        Grid.Column="1"
+                        Style="{StaticResource EstimatedTotalSummaryValueTextStyle}" />
 
                     <TextBlock
                         Grid.Row="16"
+                        Grid.Column="0"
                         Style="{StaticResource SummaryLabelTextStyle}"
                         Text="{loc:Text Summary_EstimatedProductionTime}" />
                     <TextBlock
@@ -585,6 +529,7 @@
                     <!--  Disclaimer with an information icon; the estimate is not presented as a final quote.  -->
                     <Grid
                         Grid.Row="17"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Margin="0,4,0,0">
                         <Grid.ColumnDefinitions>

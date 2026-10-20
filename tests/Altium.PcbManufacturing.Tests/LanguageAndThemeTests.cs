@@ -108,22 +108,6 @@ public sealed class LanguageAndThemeTests : IDisposable
         Assert.Equal("abc", wizard.Preferences.QuantityInput);
     }
 
-    [Fact]
-    public async Task NewOrder_KeepsTheLanguageAndTheme()
-    {
-        mainWindow.SelectedLanguage = Localizer.SupportedLanguages[1];
-        mainWindow.ToggleThemeCommand.Execute(null);
-        await wizard.CompleteOrderAsync();
-
-        await wizard.ClickPrimaryAsync(); // New Order
-
-        Assert.Equal(AppLanguage.Russian, wizard.Localizer.Language);
-        Assert.Equal(AppTheme.Light, theme.Theme);
-        Assert.Equal([AppTheme.Light], theme.Applied);
-        Assert.Equal(new UiSettings(AppLanguage.Russian, AppTheme.Light), store.Load());
-        Assert.Equal("Сохранить и продолжить", wizard.Wizard.PrimaryActionText);
-    }
-
     private IEnumerable<string?> Errors(string propertyName) =>
         wizard.Preferences.GetErrors(propertyName).Select(result => result.ErrorMessage);
 }

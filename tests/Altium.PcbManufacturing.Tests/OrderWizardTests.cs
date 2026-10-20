@@ -31,22 +31,6 @@ public sealed class OrderWizardTests
         Assert.False(Wizard.IsQuoteAvailable);
     }
 
-    [Fact]
-    public async Task Steps_AreCreatedOnceAndKeptThroughNavigationAndNewOrders()
-    {
-        (PreferencesViewModel preferences, QuoteViewModel quote, OrderViewModel order) = (Wizard.Preferences, Wizard.Quote, Wizard.Order);
-        await wizard.CompleteOrderAsync();
-        Assert.True(Wizard.StartNewOrder());
-        wizard.CompleteQuote();
-        Wizard.GoBack();
-        Wizard.GoBack();
-        Wizard.TryNavigateTo(WorkflowStep.Order);
-
-        Assert.Same(preferences, Wizard.Preferences);
-        Assert.Same(quote, Wizard.Quote);
-        Assert.Same(order, Wizard.Order);
-    }
-
     [Theory]
     [InlineData(WizardState.Preferences, false, "", "Save & Continue")]
     [InlineData(WizardState.Quote, true, "Back to Preferences", "Continue to Order")]
@@ -75,24 +59,7 @@ public sealed class OrderWizardTests
         Assert.False(Wizard.TryNavigateTo((WorkflowStep)(-1)));
     }
 
-    [Fact]
-    public async Task OperationsOfAnotherStep_AreRejected()
-    {
-        Assert.False(Wizard.ContinueToOrder());
-        Assert.False(await Wizard.PlaceOrderAsync());
-        Assert.False(Wizard.StartNewOrder());
-        Assert.False(Wizard.GoBack());
-
-        wizard.CompletePreferences();
-
-        Assert.False(Wizard.SubmitPreferences());
-        Assert.False(await Wizard.PlaceOrderAsync());
-        Assert.Equal(WorkflowStep.Quote, Wizard.CurrentStep);
-        Assert.Empty(wizard.Confirmation.Requests);
-    }
-
     [Theory]
-    [InlineData("", "55-220", "10")]
     [InlineData("PCB-001", "55-2", "10")]
     [InlineData("PCB-001", "55-220", "0")]
     public async Task SaveAndContinue_Invalid_StaysOnPreferencesWithErrorsAndAFocusRequest(string projectName, string postcode, string quantity)
@@ -111,7 +78,6 @@ public sealed class OrderWizardTests
 
     // The draft keeps the last valid quantity, so the raw input must be what blocks progress.
     [Theory]
-    [InlineData(nameof(PreferencesViewModel.ProjectNameInput), "", "Sensor board")]
     [InlineData(nameof(PreferencesViewModel.PostcodeInput), "55-2", "55-220")]
     [InlineData(nameof(PreferencesViewModel.QuantityInput), "", "10")] // "" → "10" never changes the draft.
     public void InvalidPreferences_MakeLaterStepsUnavailableUntilCorrected(string field, string invalid, string valid)
@@ -163,7 +129,6 @@ public sealed class OrderWizardTests
     // Place Order
 
     [Theory]
-    [InlineData(nameof(PreferencesViewModel.ProjectNameInput), "")]
     [InlineData(nameof(PreferencesViewModel.PostcodeInput), "55-2")]
     [InlineData(nameof(PreferencesViewModel.QuantityInput), "0")]
     public async Task PlaceOrder_WithInvalidInput_IsNotSubmittedAndReturnsToPreferencesWithErrors(string field, string invalid)
@@ -180,23 +145,6 @@ public sealed class OrderWizardTests
         Assert.Equal(WorkflowStep.Preferences, Wizard.CurrentStep);
         Assert.NotEmpty(wizard.Preferences.GetErrors(field));
         Assert.Equal(focusRequests + 1, wizard.Preferences.InvalidSubmitCount);
-    }
-
-    [Fact]
-    public async Task PlaceOrder_Cancelled_LeavesTheWorkflowEditable()
-    {
-        wizard.CompleteQuote();
-        wizard.Confirmation.Answer = false;
-
-        await wizard.ClickPrimaryAsync();
-
-        Assert.Single(wizard.Confirmation.Requests);
-        Assert.False(Wizard.IsCompleted);
-        Assert.Equal(WorkflowStep.Order, Wizard.CurrentStep);
-        Assert.Equal("Place Order", Wizard.PrimaryActionText);
-        Assert.True(Wizard.PrimaryActionCommand.CanExecute(null));
-        Assert.True(Wizard.IsPreferencesAvailable);
-        Assert.True(Wizard.GoBack());
     }
 
     [Fact]

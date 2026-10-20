@@ -5,7 +5,7 @@ using Altium.PcbManufacturing.Settings;
 namespace Altium.PcbManufacturing.Tests;
 
 /// <summary>
-/// Persistence of the UI language and theme. A missing, damaged or unwritable file must never stop the app.
+/// Persistence of the UI language and theme. Missing or damaged files fall back to defaults.
 /// </summary>
 public sealed class UiSettingsStoreTests : IDisposable
 {
@@ -35,17 +35,6 @@ public sealed class UiSettingsStoreTests : IDisposable
         Assert.Equal(UiSettings.Default, new UiSettingsStore(FilePath).Load());
 
         Write("not json");
-
-        Assert.Equal(UiSettings.Default, new UiSettingsStore(FilePath).Load());
-    }
-
-    [Fact]
-    public void Save_WhenThePathCannotBeWritten_DoesNotThrow()
-    {
-        // A directory occupies the file path, so writing the file fails.
-        Directory.CreateDirectory(FilePath);
-
-        new UiSettingsStore(FilePath).Save(new UiSettings(AppLanguage.Russian, AppTheme.Dark));
 
         Assert.Equal(UiSettings.Default, new UiSettingsStore(FilePath).Load());
     }

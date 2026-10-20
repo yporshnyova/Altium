@@ -18,10 +18,18 @@
     FontFamily="Segoe UI"
     FontSize="13"
     Foreground="{DynamicResource TextPrimaryBrush}"
-    Icon="pack://application:,,,/Icons/pcb-manufacturing.ico"
+    Icon="pack://application:,,,/Altium.PcbManufacturing;component/Icons/pcb-manufacturing.ico"
     UseLayoutRounding="True"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="MainWindow.Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
     <DockPanel>
         <!--  Header: application title on the left, language and theme on the right (available on every tab).  -->
         <Border DockPanel.Dock="Top" Style="{StaticResource HeaderBarStyle}">
@@ -54,31 +62,11 @@
                         </ComboBox.ItemContainerStyle>
                     </ComboBox>
 
-                    <!--  The icon shows the theme it switches to: a moon in light mode, a sun in dark mode.  -->
-                    <Button Margin="12,0,0,0" Command="{Binding ToggleThemeCommand}">
-                        <Button.Style>
-                            <Style BasedOn="{StaticResource HeaderIconButtonStyle}" TargetType="Button">
-                                <Setter Property="ToolTip" Value="{loc:Text Header_SwitchToDarkTheme}" />
-                                <Setter Property="AutomationProperties.Name" Value="{loc:Text Header_SwitchToDarkTheme}" />
-                                <Setter Property="Content">
-                                    <Setter.Value>
-                                        <iconPacks:PackIconMaterial Kind="WeatherNight" Style="{StaticResource HeaderIconStyle}" />
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                        <Setter Property="ToolTip" Value="{loc:Text Header_SwitchToLightTheme}" />
-                                        <Setter Property="AutomationProperties.Name" Value="{loc:Text Header_SwitchToLightTheme}" />
-                                        <Setter Property="Content">
-                                            <Setter.Value>
-                                                <iconPacks:PackIconMaterial Kind="WhiteBalanceSunny" Style="{StaticResource HeaderIconStyle}" />
-                                            </Setter.Value>
-                                        </Setter>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                    <!--  The icon, tooltip and accessible name come from the style and follow the current theme.  -->
+                    <Button
+                        Margin="12,0,0,0"
+                        Command="{Binding ToggleThemeCommand}"
+                        Style="{StaticResource ThemeToggleButtonStyle}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -95,19 +83,6 @@
             DataContext="{Binding Wizard, Mode=OneTime}"
             SelectedValue="{Binding CurrentStep, Mode=TwoWay}"
             SelectedValuePath="Tag">
-            <TabControl.Resources>
-                <Style
-                    x:Key="EditableStepTabItemStyle"
-                    BasedOn="{StaticResource {x:Type TabItem}}"
-                    TargetType="TabItem">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                            <Setter Property="ToolTip" Value="{loc:Text Workflow_OrderCompleted}" />
-                            <Setter Property="AutomationProperties.HelpText" Value="{loc:Text Workflow_OrderCompleted}" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TabControl.Resources>
             <!--
                 Every step's view (resolved from Resources/Templates/Mappings.xaml) sits above the wizard's one navigation
                 footer. The footer's actions and texts come from the wizard; on Preferences, where there is no Back, its
@@ -129,16 +104,8 @@
                                 <Button
                                     Grid.Column="0"
                                     AutomationProperties.Name="{Binding BackActionText}"
-                                    Command="{Binding BackCommand}">
-                                    <Button.Style>
-                                        <Style BasedOn="{StaticResource SecondaryButtonStyle}" TargetType="Button">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsBackVisible}" Value="False">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
+                                    Command="{Binding BackCommand}"
+                                    Style="{StaticResource BackButtonStyle}">
                                     <StackPanel Orientation="Horizontal">
                                         <iconPacks:PackIconMaterial
                                             Margin="0,0,8,0"
@@ -150,17 +117,8 @@
                                 <Button
                                     Grid.Column="0"
                                     AutomationProperties.Name="{loc:Text Actions_ResetToDefaults}"
-                                    Command="{Binding Preferences.ResetToDefaultsCommand}">
-                                    <Button.Style>
-                                        <Style BasedOn="{StaticResource SecondaryButtonStyle}" TargetType="Button">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding CurrentStep}" Value="{x:Static vm:WorkflowStep.Preferences}">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
+                                    Command="{Binding Preferences.ResetToDefaultsCommand}"
+                                    Style="{StaticResource ResetToDefaultsButtonStyle}">
                                     <StackPanel Orientation="Horizontal">
                                         <iconPacks:PackIconMaterial
                                             Margin="0,0,8,0"
@@ -177,34 +135,12 @@
                                     Style="{StaticResource PrimaryButtonStyle}">
                                     <StackPanel Orientation="Horizontal">
                                         <!--  Place Order and New Order lead with an icon; the other actions point forward.  -->
-                                        <iconPacks:PackIconMaterial Margin="0,0,8,0">
-                                            <iconPacks:PackIconMaterial.Style>
-                                                <Style BasedOn="{StaticResource ButtonIconStyle}" TargetType="iconPacks:PackIconMaterial">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding CurrentStep}" Value="{x:Static vm:WorkflowStep.Order}">
-                                                            <Setter Property="Kind" Value="ClipboardCheckOutline" />
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding IsCompleted}" Value="True">
-                                                            <Setter Property="Kind" Value="Plus" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </iconPacks:PackIconMaterial.Style>
-                                        </iconPacks:PackIconMaterial>
+                                        <iconPacks:PackIconMaterial Margin="0,0,8,0" Style="{StaticResource PrimaryActionLeadingIconStyle}" />
                                         <TextBlock VerticalAlignment="Center" Text="{Binding PrimaryActionText}" />
-                                        <iconPacks:PackIconMaterial Margin="8,0,0,0" Kind="ArrowRight">
-                                            <iconPacks:PackIconMaterial.Style>
-                                                <Style BasedOn="{StaticResource ButtonIconStyle}" TargetType="iconPacks:PackIconMaterial">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding CurrentStep}" Value="{x:Static vm:WorkflowStep.Order}">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </iconPacks:PackIconMaterial.Style>
-                                        </iconPacks:PackIconMaterial>
+                                        <iconPacks:PackIconMaterial
+                                            Margin="8,0,0,0"
+                                            Kind="ArrowRight"
+                                            Style="{StaticResource PrimaryActionTrailingIconStyle}" />
                                     </StackPanel>
                                 </Button>
                             </Grid>

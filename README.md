@@ -75,7 +75,7 @@ src/Altium.PcbManufacturing/
 ├── Services/                          # Catalog loading, pricing, dialogs, themes
 ├── ViewModels/                        # Window, wizard, steps, and observable draft
 │   └── Factories/                     # Step creation with an explicit draft
-├── Views/                             # Main window and step views
+├── Views/                             # Main window and step views, each with its own *.Styles.xaml
 │   ├── Behaviors/                     # Focus and input helpers
 │   ├── Converters/                    # Display conversions
 │   ├── Dialogs/                       # Confirmation dialog
@@ -88,8 +88,8 @@ src/Altium.PcbManufacturing/
 ├── Exceptions/                        # Catalog loading errors
 ├── Icons/                             # Application icon
 └── Resources/
-    ├── Styles/                        # Shared styles and control templates
-    ├── Templates/                     # View-model-to-view mappings
+    ├── Styles/                        # Shared layout, typography, buttons and control templates
+    ├── Templates/                     # View-model-to-view mappings and shared catalog item templates
     └── Themes/                        # Light and dark palettes
 tests/Altium.PcbManufacturing.Tests/    # Unit and WPF binding tests
 ```

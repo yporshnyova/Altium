@@ -1,0 +1,40 @@
+﻿<!--
+    OrderView resources: the placed-order banner and the notes value that reads as a placeholder while empty. Merged
+    through UserControl.Resources; the summary styles they build on come from the application resources.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="clr-namespace:Altium.PcbManufacturing.Views.Markup">
+
+    <!--  Confirmation shown above the review once the wizard has completed the order.  -->
+    <Style x:Key="OrderPlacedBannerStyle" TargetType="Border">
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="Background" Value="{DynamicResource ItemSelectedBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding DataContext.Wizard.IsCompleted, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style
+        x:Key="NotesValueTextStyle"
+        BasedOn="{StaticResource SummaryValueTextStyle}"
+        TargetType="TextBlock">
+        <Setter Property="Text" Value="{Binding Draft.Notes, Mode=OneWay}" />
+        <Style.Triggers>
+            <!--  "Not entered" is a placeholder, not a value.  -->
+            <DataTrigger Binding="{Binding Draft.HasNotes, Mode=OneWay}" Value="False">
+                <Setter Property="Text" Value="{loc:Text Summary_NotEntered}" />
+                <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>

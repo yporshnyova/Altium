@@ -1,0 +1,19 @@
+﻿<!--
+    Shared data templates for catalog items, so every selector and summary presents an option identically.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="clr-namespace:Altium.PcbManufacturing.Views.Markup"
+    xmlns:models="clr-namespace:Altium.PcbManufacturing.Models">
+
+    <!--  Swatch and localized name; used by the Preferences selector and summary and by the Quote legend.  -->
+    <DataTemplate x:Key="SolderMaskColorTemplate" DataType="{x:Type models:SolderMaskColor}">
+        <StackPanel Orientation="Horizontal">
+            <!--  The catalog's #RRGGBB string is converted to a Brush by WPF's built-in BrushConverter.  -->
+            <Border Background="{Binding HexColor, Mode=OneWay}" Style="{StaticResource ColorSwatchStyle}" />
+            <TextBlock VerticalAlignment="Center" Text="{loc:CatalogName SolderMaskColor}" />
+        </StackPanel>
+    </DataTemplate>
+
+</ResourceDictionary>

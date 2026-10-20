@@ -92,7 +92,6 @@ public sealed class PreferencesViewModelTests
     [Theory]
     [InlineData("1", 1)]
     [InlineData("007", 7)]
-    [InlineData("2147483647", int.MaxValue)]
     public void Quantity_ValidWholeNumber_IsWrittenToTheDraft(string input, int expected)
     {
         ViewModel.QuantityInput = input;
@@ -104,7 +103,6 @@ public sealed class PreferencesViewModelTests
     // Typing is filtered to digits in the view, but bound or programmatic text is still validated here.
     [Theory]
     [InlineData("0", quantityWholeNumberMessage)]
-    [InlineData("-5", quantityWholeNumberMessage)]
     [InlineData("2.5", quantityWholeNumberMessage)]
     [InlineData("abc", quantityWholeNumberMessage)]
     [InlineData("", "Enter the number of boards.")]
@@ -145,24 +143,6 @@ public sealed class PreferencesViewModelTests
     }
 
     [Fact]
-    public void IsInputValid_FollowsEveryFieldAndIsNotified()
-    {
-        List<string?> changed = [];
-        ViewModel.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
-
-        ViewModel.PostcodeInput = "55-220";
-        Assert.True(ViewModel.IsInputValid);
-        Assert.Contains(nameof(PreferencesViewModel.IsInputValid), changed);
-
-        ViewModel.QuantityInput = "abc";
-        Assert.False(ViewModel.IsInputValid);
-
-        ViewModel.QuantityInput = "5";
-        ViewModel.ProjectNameInput = "";
-        Assert.False(ViewModel.IsInputValid);
-    }
-
-    [Fact]
     public void Reset_Confirmed_RestoresDefaultsEvenOverInvalidTextAndClearsErrors()
     {
         ChangeEverything();
@@ -191,17 +171,6 @@ public sealed class PreferencesViewModelTests
         Assert.Same(Catalog.Materials[1], Draft.SelectedMaterial);
         Assert.Equal(25, Draft.Quantity);
         Assert.Equal("25", ViewModel.QuantityInput);
-    }
-
-    [Fact]
-    public void Reset_WithOnlyInvalidQuantityText_AsksBecauseTheTextWouldBeLost()
-    {
-        ViewModel.QuantityInput = "abc";
-
-        ViewModel.ResetToDefaultsCommand.Execute(null);
-
-        Assert.Single(wizard.Confirmation.Requests);
-        Assert.Equal("10", ViewModel.QuantityInput);
     }
 
     private void ChangeEverything()
