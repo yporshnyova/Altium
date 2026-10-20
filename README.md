@@ -104,4 +104,16 @@ tests/Altium.PcbManufacturing.Tests/    # Unit and WPF binding tests
 
 ## Screenshots
 
-Screenshots of the working UI are a separate assignment deliverable and are not yet included in this repository.
+The working application in English with the dark theme.
+
+### Preferences
+
+![Preferences — project details and board configuration](docs/screenshots/preferences.png)
+
+### Quote
+
+![Quote — board specifications and PCB preview](docs/screenshots/quote.png)
+
+### Order
+
+![Order — order summary and estimated total](docs/screenshots/order.png)
